@@ -20,18 +20,18 @@ module Pay
           current_period_start: object.billing_period_start_date,
           payment_method_id: object.payment_method_token,
           processor_plan: object.plan_id,
-          status: object.status.parameterize(separator: '_'),
+          status: object.status.parameterize(separator: "_"),
           trial_ends_at: (if object.trial_period
                             object.created_at + object.trial_duration.send(object.trial_duration_unit)
                           end)
         }
 
         # Canceled subscriptions should have access through the paid_through_date or updated_at
-        if object.status == 'Canceled'
+        if object.status == "Canceled"
           attributes[:ends_at] = object.updated_at
 
         # Set grace period for subscriptions that are marked to be canceled
-        elsif object.status == 'Active' && object.number_of_billing_cycles
+        elsif object.status == "Active" && object.number_of_billing_cycles
           attributes[:ends_at] = object.paid_through_date.end_of_day
         end
 
@@ -49,26 +49,26 @@ module Pay
         retry
       end
 
-      def api_record(**options)
+      def api_record(**_options)
         gateway.subscription.find(processor_id)
       end
 
-      def cancel(**options)
+      def cancel(**_options)
         return if canceled?
 
         # Braintree doesn't allow canceling at period end while on trial, so trials are canceled immediately
         result = if on_trial?
-                   gateway.subscription.cancel(processor_id)
-                 else
-                   gateway.subscription.update(processor_id,
-                                               { number_of_billing_cycles: api_record.current_billing_cycle })
-                 end
+          gateway.subscription.cancel(processor_id)
+        else
+          gateway.subscription.update(processor_id,
+            {number_of_billing_cycles: api_record.current_billing_cycle})
+        end
         sync!(object: result.subscription)
       rescue ::Braintree::BraintreeError => e
         raise Pay::Braintree::Error, e
       end
 
-      def cancel_now!(**options)
+      def cancel_now!(**_options)
         return if canceled?
 
         result = gateway.subscription.cancel(processor_id)
@@ -78,7 +78,7 @@ module Pay
       end
 
       def change_quantity(quantity, **options)
-        raise NotImplementedError, 'Braintree does not support setting quantity on subscriptions'
+        raise NotImplementedError, "Braintree does not support setting quantity on subscriptions"
       end
 
       def paused?
@@ -86,7 +86,7 @@ module Pay
       end
 
       def pause
-        raise NotImplementedError, 'Braintree does not support pausing subscriptions'
+        raise NotImplementedError, "Braintree does not support pausing subscriptions"
       end
 
       def resumable?
@@ -94,7 +94,7 @@ module Pay
       end
 
       def resume
-        raise Error, 'You can only resume subscriptions within their grace period.' unless resumable?
+        raise Error, "You can only resume subscriptions within their grace period." unless resumable?
 
         if canceled? && on_trial?
           duration = trial_ends_at.to_date - Date.today
@@ -108,9 +108,9 @@ module Pay
           )
         else
           gateway.subscription.update(processor_id, {
-                                        never_expires: true,
-                                        number_of_billing_cycles: nil
-                                      })
+            never_expires: true,
+            number_of_billing_cycles: nil
+          })
         end
 
         update(ends_at: nil, status: :active)
@@ -119,7 +119,7 @@ module Pay
       end
 
       def swap(plan, **options)
-        raise ArgumentError, 'plan must be a string' unless plan.is_a?(String)
+        raise ArgumentError, "plan must be a string" unless plan.is_a?(String)
 
         if on_grace_period? && processor_plan == plan
           resume
@@ -140,14 +140,14 @@ module Pay
         end
 
         result = gateway.subscription.update(processor_id, {
-                                               plan_id: braintree_plan.id,
-                                               price: braintree_plan.price,
-                                               never_expires: true,
-                                               number_of_billing_cycles: nil,
-                                               options: {
-                                                 prorate_charges: prorate
-                                               }
-                                             })
+          plan_id: braintree_plan.id,
+          price: braintree_plan.price,
+          never_expires: true,
+          number_of_billing_cycles: nil,
+          options: {
+            prorate_charges: prorate
+          }
+        })
         raise Error, "Braintree failed to swap plans: #{result.message}" unless result.success?
 
         update(processor_plan: plan, ends_at: nil, status: :active)
@@ -203,7 +203,7 @@ module Pay
 
       def discount_for_switching_to_yearly(amount: 0)
         api_record.discounts.each do |discount|
-          amount += discount.amount * discount.number_of_billing_cycles if discount.id == 'plan-credit'
+          amount += discount.amount * discount.number_of_billing_cycles if discount.id == "plan-credit"
         end
 
         ActiveSupport::InheritableOptions.new(amount: amount, number_of_billing_cycles: 1)
@@ -213,10 +213,10 @@ module Pay
         current_plan = find_braintree_plan(processor_plan)
 
         discount = if switching_to_monthly_plan?(current_plan, plan)
-                     discount_for_switching_to_monthly(current_plan, plan)
-                   else
-                     discount_for_switching_to_yearly
-                   end
+          discount_for_switching_to_monthly(current_plan, plan)
+        else
+          discount_for_switching_to_yearly
+        end
 
         options = {}
 
@@ -225,7 +225,7 @@ module Pay
             discounts: {
               add: [
                 {
-                  inherited_from_id: 'plan-credit',
+                  inherited_from_id: "plan-credit",
                   amount: discount.amount.round(2),
                   number_of_billing_cycles: discount.number_of_billing_cycles
                 }

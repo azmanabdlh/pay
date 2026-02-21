@@ -7,19 +7,19 @@ module Pay
         # Bypass sync operation for FakeProcessor
       end
 
-      def api_record(**options)
+      def api_record(**_options)
         self
       end
 
       # With trial, sets end to trial end (mimicking Stripe)
       # Without trial, sets can ends_at to end of month
-      def cancel(**options)
+      def cancel(**_options)
         return if canceled?
 
         update(ends_at: (on_trial? ? trial_ends_at : Time.current.end_of_month))
       end
 
-      def cancel_now!(**options)
+      def cancel_now!(**_options)
         return if canceled?
 
         ends_at = Time.current
@@ -31,7 +31,7 @@ module Pay
       end
 
       def paused?
-        status == 'paused'
+        status == "paused"
       end
 
       def pause
@@ -39,24 +39,24 @@ module Pay
       end
 
       def resumable?
-        if data&.key?('resumable')
-          data['resumable']
+        if data&.key?("resumable")
+          data["resumable"]
         else
           on_grace_period? || paused?
         end
       end
 
       def resume
-        raise Error, 'You can only resume subscriptions within their grace period.' unless resumable?
+        raise Error, "You can only resume subscriptions within their grace period." unless resumable?
 
         update(status: :active, trial_ends_at: nil, ends_at: nil)
       end
 
-      def swap(plan, **options)
+      def swap(plan, **_options)
         update(processor_plan: plan, ends_at: nil, status: :active)
       end
 
-      def change_quantity(quantity, **options)
+      def change_quantity(quantity, **_options)
         update(quantity: quantity)
       end
 

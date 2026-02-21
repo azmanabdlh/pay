@@ -29,13 +29,13 @@ module Pay
         }
 
         case attributes[:status]
-        when 'trialing'
+        when "trialing"
           attributes[:trial_ends_at] = Time.zone.parse(object.next_bill_date)
           attributes[:ends_at] = nil
-        when 'active', 'past_due'
+        when "active", "past_due"
           attributes[:trial_ends_at] = nil
           attributes[:ends_at] = nil
-        when 'paused', 'deleted'
+        when "paused", "deleted"
           # If paused or delete while on trial, set ends_at to match
           attributes[:trial_ends_at] = nil
           attributes[:ends_at] = Time.zone.parse(object.next_bill_date)
@@ -52,23 +52,23 @@ module Pay
         end
       end
 
-      def api_record(**options)
+      def api_record(**_options)
         PaddleClassic.client.users.list(subscription_id: processor_id).data.try(:first)
       rescue ::Paddle::Error => e
         raise Pay::PaddleClassic::Error, e
       end
 
       # Paddle subscriptions are canceled immediately, however we still want to give the user access to the end of the period they paid for
-      def cancel(**options)
+      def cancel(**_options)
         return if canceled?
 
         ends_at = if on_trial?
-                    trial_ends_at
-                  elsif paused?
-                    pause_starts_at
-                  else
-                    Time.parse(api_record.next_payment.date)
-                  end
+          trial_ends_at
+        elsif paused?
+          pause_starts_at
+        else
+          Time.parse(api_record.next_payment.date)
+        end
 
         PaddleClassic.client.users.cancel(subscription_id: processor_id)
         update(
@@ -82,7 +82,7 @@ module Pay
         raise Pay::PaddleClassic::Error, e
       end
 
-      def cancel_now!(**options)
+      def cancel_now!(**_options)
         return if canceled?
 
         PaddleClassic.client.users.cancel(subscription_id: processor_id)
@@ -95,7 +95,7 @@ module Pay
       end
 
       def change_quantity(quantity, **options)
-        raise NotImplementedError, 'Paddle does not support setting quantity on subscriptions'
+        raise NotImplementedError, "Paddle does not support setting quantity on subscriptions"
       end
 
       # A subscription could be set to cancel or pause in the future
@@ -105,7 +105,7 @@ module Pay
       end
 
       def paused?
-        status == 'paused'
+        status == "paused"
       end
 
       def pause
@@ -120,7 +120,7 @@ module Pay
       end
 
       def resume
-        raise Error, 'You can only resume paused subscriptions.' unless resumable?
+        raise Error, "You can only resume paused subscriptions." unless resumable?
 
         PaddleClassic.client.users.unpause(subscription_id: processor_id)
         update(ends_at: nil, status: :active, pause_starts_at: nil)
@@ -129,9 +129,9 @@ module Pay
       end
 
       def swap(plan, **options)
-        raise ArgumentError, 'plan must be a string' unless plan.is_a?(String)
+        raise ArgumentError, "plan must be a string" unless plan.is_a?(String)
 
-        attributes = { plan_id: plan, prorate: options.fetch(:prorate, true) }
+        attributes = {plan_id: plan, prorate: options.fetch(:prorate, true)}
         attributes[:quantity] = quantity if quantity?
         PaddleClassic.client.users.update(subscription_id: processor_id, **attributes)
 

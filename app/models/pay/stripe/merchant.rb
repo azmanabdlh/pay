@@ -17,7 +17,7 @@ module Pay
         raise Pay::Stripe::Error, e
       end
 
-      def account_link(refresh_url:, return_url:, type: 'account_onboarding', **options)
+      def account_link(refresh_url:, return_url:, type: "account_onboarding", **options)
         ::Stripe::AccountLink.create({
           account: processor_id,
           refresh_url: refresh_url,
@@ -29,7 +29,7 @@ module Pay
       end
 
       # A single-use login link for Express accounts to access their Stripe dashboard
-      def login_link(**options)
+      def login_link(**_options)
         ::Stripe::Account.create_login_link(processor_id)
       rescue ::Stripe::StripeError => e
         raise Pay::Stripe::Error, e
@@ -37,7 +37,7 @@ module Pay
 
       # Transfer money from the platform to this connected account
       # https://stripe.com/docs/connect/charges-transfers#transfer-availability
-      def transfer(amount:, currency: 'usd', **options)
+      def transfer(amount:, currency: "usd", **options)
         ::Stripe::Transfer.create({
           amount: amount,
           currency: currency,

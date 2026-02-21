@@ -11,6 +11,7 @@ module Pay
       autoload :Pending, "pay/midtrans/webhooks/pending"
       autoload :Deny, "pay/midtrans/webhooks/deny"
       autoload :Expire, "pay/midtrans/webhooks/expire"
+      autoload :Capture, "pay/midtrans/webhooks/capture"
     end
 
     extend Env
@@ -64,7 +65,6 @@ module Pay
       model_name, id = client_reference_id.split("_", 2)
       return unless model_names.include?(model_name)
 
-      puts "model_name => #{model_name}"
       model_name.constantize.find(id)
     rescue ActiveRecord::RecordNotFound
       Rails.logger.error "[Pay] Unable to locate record with: #{client_reference_id}"

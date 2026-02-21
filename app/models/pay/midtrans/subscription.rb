@@ -20,9 +20,9 @@ module Pay
         if pay_subscription
           pay_subscription.with_lock { pay_subscription.update!(attributes) }
         else
-          name ||= object['name'] || Pay.default_product_name
+          name ||= object["name"] || Pay.default_product_name
           pay_subscription = create!(attributes.merge(customer: pay_customer, name: name,
-                                                      processor_id: subscription_id))
+            processor_id: subscription_id))
         end
 
         pay_subscription.api_record = object
@@ -36,26 +36,26 @@ module Pay
       end
 
       def self.extract_attributes(object)
-        status = object['status'].to_s
+        status = object["status"].to_s
         mapped_status = case status
-                        when 'active' then 'active'
-                        when 'paused' then 'paused'
-                        else 'canceled'
-                        end
+        when "active" then "active"
+        when "paused" then "paused"
+        else "canceled"
+        end
 
         {
           object: object,
-          processor_plan: object['name'].to_s,
+          processor_plan: object["name"].to_s,
           quantity: 1,
           status: mapped_status,
           metered: false,
           application_fee_percent: nil,
-          pause_behavior: (mapped_status == 'paused' ? 'void' : nil),
+          pause_behavior: ((mapped_status == "paused") ? "void" : nil),
           pause_resumes_at: nil,
           current_period_start: nil,
-          current_period_end: parse_time(object['next_execution_at']),
+          current_period_end: parse_time(object["next_execution_at"]),
           trial_ends_at: nil,
-          ends_at: (mapped_status == 'canceled' ? Time.current : nil),
+          ends_at: ((mapped_status == "canceled") ? Time.current : nil),
           payment_method_id: nil
         }
       end
@@ -64,7 +64,7 @@ module Pay
         @api_record ||= ::Midtrans.get_subscription(processor_id).data
       end
 
-      def cancel(**options)
+      def cancel(**_options)
         return if canceled?
 
         ::Midtrans.disable_subscription(processor_id)
@@ -81,9 +81,9 @@ module Pay
       end
 
       def swap(plan, **options)
-        raise ArgumentError, 'plan must be a string' unless plan.is_a?(String)
+        raise ArgumentError, "plan must be a string" unless plan.is_a?(String)
 
-        @api_record = ::Midtrans.update_subscription(processor_id, { name: plan }.merge(options))
+        @api_record = ::Midtrans.update_subscription(processor_id, {name: plan}.merge(options))
         sync!(object: @api_record)
       end
 
@@ -94,7 +94,7 @@ module Pay
 
       def parse_time(value)
         Time.zone.parse(value.to_s)
-      rescue StandardError
+      rescue
         nil
       end
     end

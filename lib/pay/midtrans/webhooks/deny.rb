@@ -8,7 +8,11 @@ module Pay
           order_id = event["order_id"]
           return unless order_id
 
-          Pay::Midtrans::Charge.sync_from_order(order_id, object: event)
+          pay_charge = Pay::Midtrans::Charge.sync_from_order(order_id, object: event)
+
+          return unless pay_charge && Pay.send_email?(:payment_deny, pay_charge)
+
+          Pay.mailer.with(pay_customer: pay_charge.customer, pay_charge: pay_charge).payment_deny.deliver_later
         end
       end
     end

@@ -34,6 +34,14 @@ module Pay
       mail mail_arguments
     end
 
+    def payment_deny
+      mail mail_arguments
+    end
+
+    def payment_expire
+      mail mail_arguments
+    end
+
     private
 
     def mail_arguments

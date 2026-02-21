@@ -100,7 +100,8 @@ module Pay
         with_lock do
           pay_merchants.update_all(default: false)
           pay_merchant = pay_merchants.where(processor: processor_name,
-            type: resolve_pay_klass(processor_name, "Merchant")).first_or_initialize
+            type: resolve_pay_klass(processor_name,
+              "Merchant")).first_or_initialize
           pay_merchant.update!(attributes.merge(default: true))
         end
 

@@ -8,6 +8,10 @@ module Pay
       has_many :payment_methods, dependent: :destroy, class_name: 'Pay::Midtrans::PaymentMethod'
       has_one :default_payment_method, -> { where(default: true) }, class_name: 'Pay::Midtrans::PaymentMethod'
 
+      def api_record_attributes
+        { email: email, name: customer_name }
+      end
+
       def api_record
         with_lock do
           if processor_id?
@@ -17,12 +21,13 @@ module Pay
             self
           end
         end
-      rescue MidtransError => e
+      rescue ::MidtransError => e
         raise Pay::Midtrans::Error, e.message
       end
 
-      def update_api_record(**attributes)
-        api_record
+      def update_api_record(**_attributes)
+        api_record unless processor_id?
+        ::Midtrans::Customer.update(processor_id, api_record_attributes.merge(attributes))
       end
 
       def charge(amount, options = {})
@@ -35,6 +40,8 @@ module Pay
         payload[:custom_field1] ||= Pay::Midtrans.to_client_reference_id(owner)
         response = ::Midtrans.charge(payload)
         Pay::Midtrans::Charge.sync_from_order(payload[:transaction_details][:order_id], object: response.data)
+      rescue ::MidtransError => e
+        raise Pay::Midtrans::Error, e.message
       end
 
       def checkout(**options)
@@ -46,6 +53,8 @@ module Pay
         payload[:custom_field1] ||= Pay::Midtrans.to_client_reference_id(owner)
         response = ::Midtrans.create_snap_token(payload)
         Pay::Midtrans::Charge.sync_from_order(payload[:transaction_details][:order_id], object: response.data)
+      rescue ::MidtransError => e
+        raise Pay::Midtrans::Error, e.message
       end
 
       def subscribe(name: Pay.default_product_name, plan: Pay.default_plan_name, **options)
@@ -63,6 +72,8 @@ module Pay
         subscription_id = options[:subscription_id] || "sub-#{Pay::NanoId.generate}"
         response = ::Midtrans.create_subscription(payload.merge(id: subscription_id))
         Pay::Midtrans::Subscription.sync(subscription_id, object: response.data, name: name)
+      rescue ::MidtransError => e
+        raise Pay::Midtrans::Error, e.message
       end
     end
   end
