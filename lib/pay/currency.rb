@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   class Currency
     include ActionView::Helpers::NumberHelper
@@ -5,7 +7,7 @@ module Pay
     attr_reader :attributes
 
     def self.all
-      @currencies ||= begin
+      @all ||= begin
         path = Engine.root.join("config", "currencies", "iso.json")
         JSON.parse File.read(path)
       end
@@ -23,7 +25,7 @@ module Pay
 
     def format_amount(amount, **options)
       number_to_currency(
-        amount.to_f / subunit_to_unit.to_f,
+        amount.to_f / subunit_to_unit,
         {
           precision: precision + additional_precision(amount),
           unit: unit,

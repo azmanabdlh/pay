@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module Stripe
     module Webhooks
@@ -15,11 +17,13 @@ module Pay
           return unless pay_subscription
 
           # Stripe subscription items all have the same interval
-          price = ::Stripe::Price.retrieve({id: invoice.lines.first.pricing.price_details.price}, {stripe_account: event.try(:account)}.compact)
+          price = ::Stripe::Price.retrieve({id: invoice.lines.first.pricing.price_details.price},
+            {stripe_account: event.try(:account)}.compact)
 
           # For collection_method=send_invoice, Stripe will send an email and next_payment_attempt will be null
           # https://docs.stripe.com/api/invoices/object#invoice_object-collection_method
-          if Pay.send_email?(:subscription_renewing, pay_subscription, price) && (next_payment_attempt = invoice.next_payment_attempt)
+          if Pay.send_email?(:subscription_renewing, pay_subscription,
+            price) && (next_payment_attempt = invoice.next_payment_attempt)
             Pay.mailer.with(
               pay_customer: pay_subscription.customer,
               pay_subscription: pay_subscription,

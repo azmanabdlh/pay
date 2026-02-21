@@ -1,6 +1,10 @@
+# frozen_string_literal: true
+
 module Pay
   class PaymentMethod < Pay::ApplicationRecord
     belongs_to :customer
+
+    include Resolvable
 
     delegate :owner, to: :customer
 
@@ -19,7 +23,7 @@ module Pay
     end
 
     def self.pay_processor_for(name)
-      "Pay::#{name.to_s.classify}::PaymentMethod".constantize
+      resolve_pay_klass(name, "PaymentMethod")
     end
   end
 end

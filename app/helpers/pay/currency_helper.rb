@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module CurrencyHelper
     def pay_amount_to_currency(object, **options)

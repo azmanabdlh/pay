@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   class UserMailer < Pay.parent_mailer.constantize
     def receipt

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 module Pay
@@ -65,7 +67,7 @@ module Pay
         "id" => "evt_3JMPQbQK2ZHS99Rk0zZhIl7y",
         "object" => "event",
         "api_version" => "2020-08-27",
-        "created" => 1628480731,
+        "created" => 1_628_480_731,
         "data" => json_fixture("stripe/charge.succeeded"),
         "livemode" => livemode,
         "pending_webhooks" => 3,
@@ -83,7 +85,7 @@ module Pay
       stripe_event
     end
 
-    def with_modified_env(options, &block)
+    def with_modified_env(options)
       old_env = ENV.to_hash
       ENV.update(options)
       yield

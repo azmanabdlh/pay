@@ -1,9 +1,12 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 class Pay::Stripe::Webhooks::CheckoutSessionCompletedTest < ActiveSupport::TestCase
   test "creates Pay::Customer if client_reference_id present and valid" do
     client_reference_id = Pay::Stripe.to_client_reference_id(users(:none))
-    event = stripe_event("checkout.session.completed", overrides: {"object" => {"client_reference_id" => client_reference_id}})
+    event = stripe_event("checkout.session.completed",
+      overrides: {"object" => {"client_reference_id" => client_reference_id}})
     Pay::Stripe::Subscription.expects(:sync)
     assert_difference "Pay::Customer.count" do
       Pay::Stripe::Webhooks::CheckoutSessionCompleted.new.call(event)
@@ -11,7 +14,8 @@ class Pay::Stripe::Webhooks::CheckoutSessionCompletedTest < ActiveSupport::TestC
   end
 
   test "handles client_reference_id if present but not valid" do
-    event = stripe_event("checkout.session.completed", overrides: {"object" => {"client_reference_id" => "invalid"}})
+    event = stripe_event("checkout.session.completed",
+      overrides: {"object" => {"client_reference_id" => "invalid"}})
     Pay::Stripe::Subscription.expects(:sync)
     assert_no_difference "Pay::Customer.count" do
       Pay::Stripe::Webhooks::CheckoutSessionCompleted.new.call(event)
@@ -19,8 +23,11 @@ class Pay::Stripe::Webhooks::CheckoutSessionCompletedTest < ActiveSupport::TestC
   end
 
   test "checkout session completed syncs latest charge" do
-    event = stripe_event("checkout.session.completed", overrides: {"object" => {"payment_intent" => "pi_1234", "latest_charge" => "ch_1234", "subscription" => nil}})
-    ::Stripe::PaymentIntent.expects(:retrieve).returns(::Stripe::PaymentIntent.construct_from(id: "pi_1234", latest_charge: ::Stripe::Charge.construct_from(id: "ch_1234")))
+    event = stripe_event("checkout.session.completed",
+      overrides: {"object" => {"payment_intent" => "pi_1234", "latest_charge" => "ch_1234",
+                               "subscription" => nil}})
+    ::Stripe::PaymentIntent.expects(:retrieve).returns(::Stripe::PaymentIntent.construct_from(id: "pi_1234",
+      latest_charge: ::Stripe::Charge.construct_from(id: "ch_1234")))
     Pay::Stripe::Charge.expects(:sync)
     assert_no_difference "Pay::Customer.count" do
       Pay::Stripe::Webhooks::CheckoutSessionCompleted.new.call(event)

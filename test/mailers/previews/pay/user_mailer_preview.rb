@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Pay::UserMailerPreview < ActionMailer::Preview
   def payment_action_required
     Pay::UserMailer.with(

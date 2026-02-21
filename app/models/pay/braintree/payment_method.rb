@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module Braintree
     class PaymentMethod < Pay::PaymentMethod
@@ -27,6 +29,7 @@ module Pay
       def detach
         result = gateway.payment_method.delete(processor_id)
         raise Pay::Braintree::Error, result unless result.success?
+
         result.success?
       end
 

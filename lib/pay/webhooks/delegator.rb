@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module Webhooks
     class Delegator
@@ -10,6 +12,7 @@ module Pay
       # Configure DSL
       def configure(&block)
         raise ArgumentError, "must provide a block" unless block
+
         block.arity.zero? ? instance_eval(&block) : yield(self)
       end
 
@@ -54,7 +57,7 @@ module Pay
       private
 
       def to_regexp(name)
-        %r{^#{Regexp.escape name_with_namespace(name)}}
+        /^#{Regexp.escape name_with_namespace(name)}/
       end
 
       def name_with_namespace(name, delimiter: ".")

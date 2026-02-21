@@ -1,16 +1,20 @@
+# frozen_string_literal: true
+
 module Pay
   module Stripe
     class Subscription < Pay::Subscription
       attr_writer :api_record
 
       def self.sync_from_checkout_session(session_id, stripe_account: nil)
-        checkout_session = ::Stripe::Checkout::Session.retrieve({id: session_id}, {stripe_account: stripe_account}.compact)
+        checkout_session = ::Stripe::Checkout::Session.retrieve({id: session_id},
+          {stripe_account: stripe_account}.compact)
         sync(checkout_session.subscription)
       end
 
       def self.sync(subscription_id, object: nil, name: nil, stripe_account: nil, try: 0, retries: 1)
         # Skip loading the latest subscription details from the API if we already have it
-        object ||= ::Stripe::Subscription.retrieve({id: subscription_id}.merge(expand_options), {stripe_account: stripe_account}.compact)
+        object ||= ::Stripe::Subscription.retrieve({id: subscription_id}.merge(expand_options),
+          {stripe_account: stripe_account}.compact)
         if object.customer.blank?
           Rails.logger.debug "Stripe Subscription #{object.id} does not have a customer"
           return
@@ -53,6 +57,7 @@ module Pay
 
         object.items.auto_paging_each do |subscription_item|
           next if attributes[:metered]
+
           attributes[:metered] = true if subscription_item.price.try(:recurring).try(:usage_type) == "metered"
         end
 
@@ -106,7 +111,8 @@ module Pay
 
             case invoice_payment.payment.type
             when "payment_intent"
-              Pay::Stripe::Charge.sync_payment_intent(invoice_payment.payment.payment_intent, stripe_account: pay_subscription.stripe_account)
+              Pay::Stripe::Charge.sync_payment_intent(invoice_payment.payment.payment_intent,
+                stripe_account: pay_subscription.stripe_account)
             when "charge"
               Pay::Stripe::Charge.sync(invoice_payment.payment.charge, stripe_account: pay_subscription.stripe_account)
             end
@@ -116,12 +122,10 @@ module Pay
         pay_subscription
       rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
         try += 1
-        if try <= retries
-          sleep 0.1
-          retry
-        else
-          raise
-        end
+        raise unless try <= retries
+
+        sleep 0.1
+        retry
       end
 
       # Common expand options for all requests that create, retrieve, or update a Stripe Subscription
@@ -145,7 +149,8 @@ module Pay
       end
 
       def api_record(**options)
-        @api_record ||= ::Stripe::Subscription.retrieve(options.with_defaults(id: processor_id).merge(expand_options), {stripe_account: stripe_account}.compact)
+        @api_record ||= ::Stripe::Subscription.retrieve(options.with_defaults(id: processor_id).merge(expand_options),
+          {stripe_account: stripe_account}.compact)
       end
 
       # Returns a SetupIntent or PaymentIntent client secret for the subscription
@@ -156,7 +161,8 @@ module Pay
       # Sets the default_payment_method on a subscription
       # Pass an empty string to unset
       def update_payment_method(id)
-        @api_record = ::Stripe::Subscription.update(processor_id, {default_payment_method: id}.merge(expand_options), stripe_options)
+        @api_record = ::Stripe::Subscription.update(processor_id, {default_payment_method: id}.merge(expand_options),
+          stripe_options)
         update(payment_method_id: @api_record.default_payment_method&.id)
       rescue ::Stripe::StripeError => e
         raise Pay::Stripe::Error, e
@@ -172,7 +178,8 @@ module Pay
         if past_due? && options.fetch(:past_due_cancel_now, true)
           cancel_now!
         else
-          @api_record = ::Stripe::Subscription.update(processor_id, {cancel_at_period_end: true}.merge(expand_options), stripe_options)
+          @api_record = ::Stripe::Subscription.update(processor_id, {cancel_at_period_end: true}.merge(expand_options),
+            stripe_options)
           update(ends_at: Time.at(@api_record.cancel_at))
         end
       rescue ::Stripe::StripeError => e
@@ -206,7 +213,8 @@ module Pay
           ::Stripe::SubscriptionItem.update(subscription_item_id, options.merge(quantity: quantity), stripe_options)
           @api_record = nil
         else
-          @api_record = ::Stripe::Subscription.update(processor_id, options.merge(quantity: quantity).merge(expand_options), stripe_options)
+          @api_record = ::Stripe::Subscription.update(processor_id,
+            options.merge(quantity: quantity).merge(expand_options), stripe_options)
         end
         update(quantity: quantity)
       rescue ::Stripe::StripeError => e
@@ -259,7 +267,8 @@ module Pay
       #
       # https://docs.stripe.com/billing/subscriptions/pause-payment#unpausing
       def unpause
-        @api_record = ::Stripe::Subscription.update(processor_id, {pause_collection: ""}.merge(expand_options), stripe_options)
+        @api_record = ::Stripe::Subscription.update(processor_id, {pause_collection: ""}.merge(expand_options),
+          stripe_options)
         update(
           pause_behavior: nil,
           pause_resumes_at: nil,
@@ -272,9 +281,7 @@ module Pay
       end
 
       def resume
-        unless resumable?
-          raise Error, "You can only resume subscriptions within their grace period."
-        end
+        raise Error, "You can only resume subscriptions within their grace period." unless resumable?
 
         if paused?
           unpause
@@ -293,7 +300,7 @@ module Pay
       def swap(plan, **options)
         raise ArgumentError, "plan must be a string" unless plan.is_a?(String)
 
-        prorate = options.fetch(:prorate) { true }
+        prorate = options.fetch(:prorate, true)
         proration_behavior = options.delete(:proration_behavior) || (prorate ? "always_invoice" : "none")
 
         @api_record = ::Stripe::Subscription.update(
@@ -338,7 +345,8 @@ module Pay
         payment_intent = ::Stripe::PaymentIntent.retrieve({id: payment_intent_id}, stripe_options)
 
         payment_intent = if payment_intent.status == "requires_payment_method"
-          ::Stripe::PaymentIntent.confirm(payment_intent_id, {payment_method: customer.default_payment_method.processor_id}, stripe_options)
+          ::Stripe::PaymentIntent.confirm(payment_intent_id,
+            {payment_method: customer.default_payment_method.processor_id}, stripe_options)
         else
           ::Stripe::PaymentIntent.confirm(payment_intent_id, stripe_options)
         end
@@ -349,7 +357,8 @@ module Pay
 
       # Looks up open invoices for a subscription and attempts to pay them
       def pay_open_invoices
-        ::Stripe::Invoice.list({subscription: processor_id, status: :open}, stripe_options).auto_paging_each do |invoice|
+        ::Stripe::Invoice.list({subscription: processor_id, status: :open},
+          stripe_options).auto_paging_each do |invoice|
           retry_failed_payment(payment_intent_id: invoice.payment_intent)
         end
       end

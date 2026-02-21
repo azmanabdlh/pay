@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 module Pay
   class Subscription < Pay::ApplicationRecord
-    STATUSES = %w[incomplete incomplete_expired trialing active past_due canceled unpaid paused]
+    STATUSES = %w[incomplete incomplete_expired trialing active past_due canceled unpaid paused].freeze
 
     # Associations
     belongs_to :customer
@@ -9,11 +11,15 @@ module Pay
 
     # Scopes
     scope :for_name, ->(name) { where(name: name) }
-    scope :on_trial, -> { where(status: ["on_trial", "trialing", "active"]).where("trial_ends_at > ?", Time.current) }
+    scope :on_trial, -> { where(status: %w[on_trial trialing active]).where("trial_ends_at > ?", Time.current) }
     scope :canceled, -> { where.not(ends_at: nil) }
     scope :cancelled, -> { canceled }
-    scope :on_grace_period, -> { where("#{table_name}.ends_at IS NOT NULL AND #{table_name}.ends_at > ?", Time.current) }
-    scope :active, -> { where(status: "active").pause_not_started.where("#{table_name}.ends_at IS NULL OR #{table_name}.ends_at > ?", Time.current).or(on_trial) }
+    scope :on_grace_period, lambda {
+      where("#{table_name}.ends_at IS NOT NULL AND #{table_name}.ends_at > ?", Time.current)
+    }
+    scope :active, lambda {
+      where(status: "active").pause_not_started.where("#{table_name}.ends_at IS NULL OR #{table_name}.ends_at > ?", Time.current).or(on_trial)
+    }
     scope :paused, -> { where(status: "paused").or(where("pause_starts_at <= ?", Time.current)) }
     scope :pause_not_started, -> { where("pause_starts_at IS NULL OR pause_starts_at > ?", Time.current) }
     scope :active_or_paused, -> { active.or(paused) }
@@ -69,11 +75,13 @@ module Pay
     # Does not include the last second of the trial
     def on_trial?
       return false if ended?
+
       trial_ends_at? && trial_ends_at > Time.current
     end
 
     def trial_ended?
       return true if ended?
+
       trial_ends_at? && trial_ends_at <= Time.current
     end
 
@@ -97,7 +105,7 @@ module Pay
     # Otherwise a subscription is active unless it has ended or is currently paused
     # Check the subscription status so we don't accidentally consider "incomplete", "unpaid", or other statuses as active
     def active?
-      ["trialing", "active"].include?(status) &&
+      %w[trialing active].include?(status) &&
         (!(canceled? || paused?) || on_trial? || on_grace_period?)
     end
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module Braintree
     class Error < Pay::Error
@@ -41,7 +43,8 @@ module Pay
     def self.enabled?
       return false unless Pay.enabled_processors.include?(:braintree) && defined?(::Braintree)
 
-      Pay::Engine.version_matches?(required: "~> 4", current: ::Braintree::Version::String) || (raise "[Pay] braintree gem must be version ~> 4")
+      Pay::Engine.version_matches?(required: "~> 4",
+        current: ::Braintree::Version::String) || (raise "[Pay] braintree gem must be version ~> 4")
     end
 
     def self.setup

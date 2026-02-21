@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module LemonSqueezy
     class Subscription < Pay::Subscription
@@ -19,14 +21,14 @@ module Pay
         }
 
         case attributes[:status]
-        when "cancelled"
+        when 'cancelled'
           # Remove payment methods since customer cannot be reused after cancelling
           Pay::PaymentMethod.where(customer_id: object.customer_id).destroy_all
-        when "on_trial"
+        when 'on_trial'
           attributes[:trial_ends_at] = Time.parse(object.trial_ends_at)
-        when "paused"
+        when 'paused'
           # attributes[:pause_starts_at] = Time.parse(object.paused_at)
-        when "active", "past_due"
+        when 'active', 'past_due'
           attributes[:trial_ends_at] = nil
           attributes[:pause_starts_at] = nil
           attributes[:ends_at] = nil
@@ -57,6 +59,7 @@ module Pay
 
       def cancel(**options)
         return if canceled?
+
         response = ::LemonSqueezy::Subscription.cancel(id: processor_id)
         update(status: response.status, ends_at: response.ends_at)
       rescue ::LemonSqueezy::Error => e
@@ -64,7 +67,7 @@ module Pay
       end
 
       def cancel_now!(**options)
-        raise Pay::Error, "Lemon Squeezy does not support cancelling immediately through the API."
+        raise Pay::Error, 'Lemon Squeezy does not support cancelling immediately through the API.'
       end
 
       def change_quantity(quantity, **options)
@@ -82,7 +85,7 @@ module Pay
       end
 
       def paused?
-        status == "paused"
+        status == 'paused'
       end
 
       def pause(**options)
@@ -97,9 +100,7 @@ module Pay
       end
 
       def resume
-        unless resumable?
-          raise Error, "You can only resume paused or cancelled subscriptions"
-        end
+        raise Error, 'You can only resume paused or cancelled subscriptions' unless resumable?
 
         if paused? && pause_starts_at? && Time.current < pause_starts_at
           ::LemonSqueezy::Subscription.unpause(id: processor_id)
@@ -115,8 +116,8 @@ module Pay
       # Lemon Squeezy requires both the Product ID and Variant ID.
       # The Variant ID will be saved as the processor_plan
       def swap(plan, **options)
-        raise Error, "A plan_id is required to swap a subscription" unless plan
-        raise Error, "A variant_id is required to swap a subscription" unless options[:variant_id]
+        raise Error, 'A plan_id is required to swap a subscription' unless plan
+        raise Error, 'A variant_id is required to swap a subscription' unless options[:variant_id]
 
         ::LemonSqueezy::Subscription.change_plan id: processor_id, plan_id: plan, variant_id: options[:variant_id]
 

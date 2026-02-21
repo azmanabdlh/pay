@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module Stripe
     module Webhooks
@@ -15,13 +17,13 @@ module Pay
 
           invoice_payment = ::Stripe::InvoicePayment.list({invoice: invoice.id, status: :open}).first
 
-          if invoice_payment && Pay.send_email?(:payment_action_required, pay_subscription)
-            Pay.mailer.with(
-              pay_customer: pay_subscription.customer,
-              pay_subscription: pay_subscription,
-              payment_intent_id: invoice_payment.payment.payment_intent
-            ).payment_action_required.deliver_later
-          end
+          return unless invoice_payment && Pay.send_email?(:payment_action_required, pay_subscription)
+
+          Pay.mailer.with(
+            pay_customer: pay_subscription.customer,
+            pay_subscription: pay_subscription,
+            payment_intent_id: invoice_payment.payment.payment_intent
+          ).payment_action_required.deliver_later
         end
       end
     end

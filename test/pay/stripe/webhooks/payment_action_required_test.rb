@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 class Pay::Stripe::Webhooks::PaymentActionRequiredTest < ActiveSupport::TestCase
@@ -9,7 +11,9 @@ class Pay::Stripe::Webhooks::PaymentActionRequiredTest < ActiveSupport::TestCase
   end
 
   test "it sends an email" do
-    Pay::Stripe::Subscription.sync @event.data.object.subscription, object: fake_stripe_subscription(id: @event.data.object.subscription, customer: @event.data.object.customer, status: :past_due)
+    Pay::Stripe::Subscription.sync @event.data.object.subscription,
+      object: fake_stripe_subscription(id: @event.data.object.subscription, customer: @event.data.object.customer,
+        status: :past_due)
     ::Stripe::InvoicePayment.expects(:list).returns(::Stripe::ListObject.construct_from(
       {
         object: "list",
@@ -19,7 +23,7 @@ class Pay::Stripe::Webhooks::PaymentActionRequiredTest < ActiveSupport::TestCase
             object: "invoice_payment",
             amount_paid: nil,
             amount_requested: 1900,
-            created: 1748762673,
+            created: 1_748_762_673,
             currency: "usd",
             invoice: "in_1234",
             is_default: true,
@@ -46,7 +50,9 @@ class Pay::Stripe::Webhooks::PaymentActionRequiredTest < ActiveSupport::TestCase
   end
 
   test "skips email if subscription is incomplete" do
-    Pay::Stripe::Subscription.sync @event.data.object.subscription, object: fake_stripe_subscription(id: @event.data.object.subscription, customer: @event.data.object.customer, status: :incomplete)
+    Pay::Stripe::Subscription.sync @event.data.object.subscription,
+      object: fake_stripe_subscription(id: @event.data.object.subscription, customer: @event.data.object.customer,
+        status: :incomplete)
 
     assert_no_enqueued_jobs do
       Pay::Stripe::Webhooks::PaymentActionRequired.new.call(@event)

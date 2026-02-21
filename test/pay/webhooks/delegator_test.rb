@@ -1,10 +1,12 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 class Pay::WebhookDelegatorTest < ActiveSupport::TestCase
   class TestEventProcessor
     attr_accessor :success
 
-    def call(event)
+    def call(_event)
       @success = true
     end
   end
@@ -25,7 +27,7 @@ class Pay::WebhookDelegatorTest < ActiveSupport::TestCase
   test "instruments events" do
     success = nil
 
-    delegator.subscribe "stripe.test_event" do |event|
+    delegator.subscribe "stripe.test_event" do |_event|
       success = true
     end
 
@@ -50,17 +52,17 @@ class Pay::WebhookDelegatorTest < ActiveSupport::TestCase
   test "supports multiple subscriptions for the same event" do
     results = []
 
-    delegator.subscribe "stripe.test_event" do |event|
+    delegator.subscribe "stripe.test_event" do |_event|
       results << "a"
     end
 
-    delegator.subscribe "stripe.test_event" do |event|
+    delegator.subscribe "stripe.test_event" do |_event|
       results << "b"
     end
 
     delegator.instrument event: {}, type: "stripe.test_event"
     assert_equal 2, results.length
-    assert_equal ["a", "b"], results
+    assert_equal %w[a b], results
   end
 
   test "listening?" do

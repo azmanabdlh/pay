@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   class Merchant < Pay::ApplicationRecord
     belongs_to :owner, polymorphic: true

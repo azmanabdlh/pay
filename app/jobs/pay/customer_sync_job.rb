@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   class CustomerSyncJob < ApplicationJob
     def perform(pay_customer_id)

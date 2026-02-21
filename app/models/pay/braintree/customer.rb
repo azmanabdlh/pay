@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module Braintree
     class Customer < Pay::Customer
@@ -28,6 +30,7 @@ module Pay
         else
           result = gateway.customer.create(api_record_attributes)
           raise Pay::Braintree::Error, result unless result.success?
+
           update!(processor_id: result.customer.id)
           result.customer
         end
@@ -67,7 +70,7 @@ module Pay
         raise Pay::Error, "Customer has no default payment method" if token.nil?
 
         # Standardize the trial period options
-        if (trial_period_days = options.delete(:trial_period_days)) && trial_period_days > 0
+        if (trial_period_days = options.delete(:trial_period_days)) && trial_period_days.positive?
           options.merge!(trial_period: true, trial_duration: trial_period_days, trial_duration_unit: :day)
         end
 
@@ -216,7 +219,7 @@ module Pay
           attribute_name = transaction.payment_instrument_type
 
           # The attribute name for Apple and Google Pay don't include _card for some reason
-          if ["apple_pay_card", "google_pay_card"].include?(transaction.payment_instrument_type)
+          if %w[apple_pay_card google_pay_card].include?(transaction.payment_instrument_type)
             attribute_name = attribute_name.split("_card").first
 
           # Android Pay was renamed to Google Pay, but test nonces still use android_pay_card

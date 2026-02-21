@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module FakeProcessor
     class Subscription < Pay::Subscription
@@ -13,6 +15,7 @@ module Pay
       # Without trial, sets can ends_at to end of month
       def cancel(**options)
         return if canceled?
+
         update(ends_at: (on_trial? ? trial_ends_at : Time.current.end_of_month))
       end
 
@@ -28,7 +31,7 @@ module Pay
       end
 
       def paused?
-        status == "paused"
+        status == 'paused'
       end
 
       def pause
@@ -36,17 +39,15 @@ module Pay
       end
 
       def resumable?
-        if data&.has_key?("resumable")
-          data["resumable"]
+        if data&.key?('resumable')
+          data['resumable']
         else
           on_grace_period? || paused?
         end
       end
 
       def resume
-        unless resumable?
-          raise Error, "You can only resume subscriptions within their grace period."
-        end
+        raise Error, 'You can only resume subscriptions within their grace period.' unless resumable?
 
         update(status: :active, trial_ends_at: nil, ends_at: nil)
       end

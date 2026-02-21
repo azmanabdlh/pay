@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module LemonSqueezy
     class Customer < Pay::Customer
@@ -40,7 +42,7 @@ module Pay
         ::LemonSqueezy::Customer.update(id: processor_id, **api_record_attributes.merge(attributes))
       end
 
-      def charge(amount, options = {})
+      def charge(_amount, _options = {})
         raise Pay::Error, "LemonSqueezy does not support one-off charges"
       end
 
@@ -57,7 +59,8 @@ module Pay
 
         options[:store_id] = Pay::LemonSqueezy.store_id
         options[:product_options] ||= {}
-        options[:product_options][:redirect_url] = merge_order_id_param(options.dig(:product_options, :redirect_url) || root_url)
+        options[:product_options][:redirect_url] =
+          merge_order_id_param(options.dig(:product_options, :redirect_url) || root_url)
 
         ::LemonSqueezy::Checkout.create(**options)
       end

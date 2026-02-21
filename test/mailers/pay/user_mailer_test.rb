@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 class UserMailerTest < ActionMailer::TestCase
@@ -61,7 +63,8 @@ class UserMailerTest < ActionMailer::TestCase
 
   test "subscription_renewing" do
     time = Time.current
-    email = Pay::UserMailer.with(pay_customer: @pay_customer, pay_subscription: Pay::Subscription.new, date: time).subscription_renewing
+    email = Pay::UserMailer.with(pay_customer: @pay_customer, pay_subscription: Pay::Subscription.new,
+      date: time).subscription_renewing
 
     assert_equal [@user.email], email.to
     assert_equal I18n.t("pay.user_mailer.subscription_renewing.subject", application: Pay.application_name),
@@ -73,7 +76,8 @@ class UserMailerTest < ActionMailer::TestCase
     email = Pay::UserMailer.with(pay_customer: @pay_customer, payment_intent_id: "x", pay_subscription: Pay::Subscription.new).payment_action_required
 
     assert_equal [@user.email], email.to
-    assert_equal I18n.t("pay.user_mailer.payment_action_required.subject", application: Pay.application_name), email.subject
+    assert_equal I18n.t("pay.user_mailer.payment_action_required.subject", application: Pay.application_name),
+      email.subject
     assert_includes email.html_part.decoded, Pay::Engine.instance.routes.url_helpers.payment_path("x")
   end
 
@@ -99,7 +103,8 @@ class UserMailerTest < ActionMailer::TestCase
     email = Pay::UserMailer.with(pay_customer: @pay_customer).subscription_trial_will_end
 
     assert_equal [@user.email], email.to
-    assert_equal I18n.t("pay.user_mailer.subscription_trial_will_end.subject", application: Pay.application_name), email.subject
+    assert_equal I18n.t("pay.user_mailer.subscription_trial_will_end.subject", application: Pay.application_name),
+      email.subject
     assert_includes email.html_part.decoded, "trial is ending soon"
   end
 
@@ -107,7 +112,8 @@ class UserMailerTest < ActionMailer::TestCase
     email = Pay::UserMailer.with(pay_customer: @pay_customer).subscription_trial_ended
 
     assert_equal [@user.email], email.to
-    assert_equal I18n.t("pay.user_mailer.subscription_trial_ended.subject", application: Pay.application_name), email.subject
+    assert_equal I18n.t("pay.user_mailer.subscription_trial_ended.subject", application: Pay.application_name),
+      email.subject
     assert_includes email.html_part.decoded, "trial has ended"
   end
 

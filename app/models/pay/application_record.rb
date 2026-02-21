@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   class ApplicationRecord < Pay.model_parent_class.constantize
     self.abstract_class = true

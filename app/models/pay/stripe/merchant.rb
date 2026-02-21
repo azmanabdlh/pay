@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module Stripe
     class Merchant < Pay::Merchant
@@ -15,7 +17,7 @@ module Pay
         raise Pay::Stripe::Error, e
       end
 
-      def account_link(refresh_url:, return_url:, type: "account_onboarding", **options)
+      def account_link(refresh_url:, return_url:, type: 'account_onboarding', **options)
         ::Stripe::AccountLink.create({
           account: processor_id,
           refresh_url: refresh_url,
@@ -35,7 +37,7 @@ module Pay
 
       # Transfer money from the platform to this connected account
       # https://stripe.com/docs/connect/charges-transfers#transfer-availability
-      def transfer(amount:, currency: "usd", **options)
+      def transfer(amount:, currency: 'usd', **options)
         ::Stripe::Transfer.create({
           amount: amount,
           currency: currency,

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # A subscription is canceled.
 
 module Pay

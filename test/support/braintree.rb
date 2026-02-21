@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Braintree configuration
 Pay.braintree_gateway = Braintree::Gateway.new(
   environment: :sandbox,

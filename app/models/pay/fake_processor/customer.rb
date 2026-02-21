@@ -1,10 +1,12 @@
+# frozen_string_literal: true
+
 module Pay
   module FakeProcessor
     class Customer < Pay::Customer
-      has_many :charges, dependent: :destroy, class_name: "Pay::FakeProcessor::Charge"
-      has_many :subscriptions, dependent: :destroy, class_name: "Pay::FakeProcessor::Subscription"
-      has_many :payment_methods, dependent: :destroy, class_name: "Pay::FakeProcessor::PaymentMethod"
-      has_one :default_payment_method, -> { where(default: true) }, class_name: "Pay::FakeProcessor::PaymentMethod"
+      has_many :charges, dependent: :destroy, class_name: 'Pay::FakeProcessor::Charge'
+      has_many :subscriptions, dependent: :destroy, class_name: 'Pay::FakeProcessor::Subscription'
+      has_many :payment_methods, dependent: :destroy, class_name: 'Pay::FakeProcessor::PaymentMethod'
+      has_one :default_payment_method, -> { where(default: true) }, class_name: 'Pay::FakeProcessor::PaymentMethod'
 
       def api_record
         update!(processor_id: NanoId.generate) unless processor_id?
@@ -25,7 +27,7 @@ module Pay
           amount: amount,
           data: {
             payment_method_type: :card,
-            brand: "Fake",
+            brand: 'Fake',
             last4: 1234,
             exp_month: Date.today.month,
             exp_year: Date.today.year
@@ -68,7 +70,7 @@ module Pay
           default: default,
           payment_method_type: :card,
           data: {
-            brand: "Fake",
+            brand: 'Fake',
             last4: 1234,
             exp_month: Date.today.month,
             exp_year: Date.today.year

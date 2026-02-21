@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module Billable
     module SyncCustomer
@@ -18,11 +20,11 @@ module Pay
       private
 
       def enqeue_customer_sync_job
-        if pay_should_sync_customer?
-          # Queue job to update each payment processor for this customer
-          pay_customers.pluck(:id).each do |pay_customer_id|
-            CustomerSyncJob.perform_later(pay_customer_id)
-          end
+        return unless pay_should_sync_customer?
+
+        # Queue job to update each payment processor for this customer
+        pay_customers.pluck(:id).each do |pay_customer_id|
+          CustomerSyncJob.perform_later(pay_customer_id)
         end
       end
     end

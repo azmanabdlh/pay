@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   class Webhook < Pay::ApplicationRecord
     validates :processor, presence: true

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 class Pay::PaddleClassic::Subscription::Test < ActiveSupport::TestCase
@@ -90,7 +92,7 @@ class Pay::PaddleClassic::Subscription::Test < ActiveSupport::TestCase
 
   test "paddle classic can swap plans" do
     @pay_customer.subscription.swap("594470")
-    assert_equal 594470, @pay_customer.subscription.api_record.plan_id
+    assert_equal 594_470, @pay_customer.subscription.api_record.plan_id
     assert_equal "active", @pay_customer.subscription.status
   end
 

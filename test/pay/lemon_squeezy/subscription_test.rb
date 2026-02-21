@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 class Pay::LemonSqueezy::Subscription::Test < ActiveSupport::TestCase
@@ -27,7 +29,7 @@ class Pay::LemonSqueezy::Subscription::Test < ActiveSupport::TestCase
 
   test "lemon squeezy can swap plans" do
     @pay_customer.subscription.swap("174873", variant_id: "225676")
-    assert_equal 225676, @pay_customer.subscription.api_record.variant_id
+    assert_equal 225_676, @pay_customer.subscription.api_record.variant_id
     assert_equal "active", @pay_customer.subscription.status
   end
 

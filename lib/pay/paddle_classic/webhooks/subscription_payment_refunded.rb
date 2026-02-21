@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module PaddleClassic
     module Webhooks
@@ -8,9 +10,9 @@ module Pay
 
           pay_charge.update!(amount_refunded: (event.gross_refund.to_f * 100).to_i)
 
-          if Pay.send_email?(:refund, pay_charge)
-            Pay.mailer.with(pay_customer: pay_charge.customer, pay_charge: pay_charge).refund.deliver_later
-          end
+          return unless Pay.send_email?(:refund, pay_charge)
+
+          Pay.mailer.with(pay_customer: pay_charge.customer, pay_charge: pay_charge).refund.deliver_later
         end
       end
     end

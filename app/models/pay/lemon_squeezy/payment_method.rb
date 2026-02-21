@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module LemonSqueezy
     class PaymentMethod < Pay::PaymentMethod

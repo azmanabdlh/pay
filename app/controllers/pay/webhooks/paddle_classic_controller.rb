@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module Webhooks
     class PaddleClassicController < Pay::ApplicationController
@@ -25,6 +27,7 @@ module Pay
         event = verify_params.as_json
         verifier = Pay::PaddleClassic::Webhooks::SignatureVerifier.new(event)
         return event if verifier.verify
+
         raise Pay::PaddleClassic::Error, "Unable to verify Paddle webhook event"
       end
 

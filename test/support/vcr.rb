@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "webmock/minitest"
 
 VCR.configure do |c|

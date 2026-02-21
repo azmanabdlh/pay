@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module LemonSqueezy
     class Error < Pay::Error
@@ -5,9 +7,9 @@ module Pay
     end
 
     module Webhooks
-      autoload :Order, "pay/lemon_squeezy/webhooks/order"
-      autoload :Subscription, "pay/lemon_squeezy/webhooks/subscription"
-      autoload :SubscriptionPayment, "pay/lemon_squeezy/webhooks/subscription_payment"
+      autoload :Order, 'pay/lemon_squeezy/webhooks/order'
+      autoload :Subscription, 'pay/lemon_squeezy/webhooks/subscription'
+      autoload :SubscriptionPayment, 'pay/lemon_squeezy/webhooks/subscription_payment'
     end
 
     extend Env
@@ -15,7 +17,8 @@ module Pay
     def self.enabled?
       return false unless Pay.enabled_processors.include?(:lemon_squeezy) && defined?(::LemonSqueezy)
 
-      Pay::Engine.version_matches?(required: "~> 1.0", current: ::LemonSqueezy::VERSION) || (raise "[Pay] lemonsqueezy gem must be version ~> 1.0")
+      Pay::Engine.version_matches?(required: '~> 1.0',
+                                   current: ::LemonSqueezy::VERSION) || (raise '[Pay] lemonsqueezy gem must be version ~> 1.0')
     end
 
     def self.setup
@@ -46,16 +49,16 @@ module Pay
 
     def self.configure_webhooks
       Pay::Webhooks.configure do |events|
-        events.subscribe "lemon_squeezy.order_created", Pay::LemonSqueezy::Webhooks::Order.new
-        events.subscribe "lemon_squeezy.subscription_created", Pay::LemonSqueezy::Webhooks::Subscription.new
-        events.subscribe "lemon_squeezy.subscription_updated", Pay::LemonSqueezy::Webhooks::Subscription.new
-        events.subscribe "lemon_squeezy.subscription_payment_refunded", Pay::LemonSqueezy::Webhooks::SubscriptionPayment.new
-        events.subscribe "lemon_squeezy.subscription_payment_success", Pay::LemonSqueezy::Webhooks::SubscriptionPayment.new
+        events.subscribe 'lemon_squeezy.order_created', Pay::LemonSqueezy::Webhooks::Order.new
+        events.subscribe 'lemon_squeezy.subscription_created', Pay::LemonSqueezy::Webhooks::Subscription.new
+        events.subscribe 'lemon_squeezy.subscription_updated', Pay::LemonSqueezy::Webhooks::Subscription.new
+        events.subscribe 'lemon_squeezy.subscription_payment_refunded', Pay::LemonSqueezy::Webhooks::SubscriptionPayment.new
+        events.subscribe 'lemon_squeezy.subscription_payment_success', Pay::LemonSqueezy::Webhooks::SubscriptionPayment.new
       end
     end
 
     def self.construct_from_webhook_event(event)
-      data = event["data"]
+      data = event['data']
       case data
       when Array
         data.map do |object|
@@ -63,13 +66,13 @@ module Pay
         end
       when Hash
         type = {
-          "orders" => ::LemonSqueezy::Order,
-          "subscriptions" => ::LemonSqueezy::Subscription,
-          "subscription-invoices" => ::LemonSqueezy::SubscriptionInvoice
-        }.fetch(data["type"])
+          'orders' => ::LemonSqueezy::Order,
+          'subscriptions' => ::LemonSqueezy::Subscription,
+          'subscription-invoices' => ::LemonSqueezy::SubscriptionInvoice
+        }.fetch(data['type'])
 
         object = type.new(data)
-        object.meta = event["meta"]
+        object.meta = event['meta']
         object
       end
     end
@@ -84,9 +87,9 @@ module Pay
         end
       end
 
-      if subscriptions.empty?
-        Pay::LemonSqueezy::Charge.sync_order(order_id, object: object)
-      end
+      return unless subscriptions.empty?
+
+      Pay::LemonSqueezy::Charge.sync_order(order_id, object: object)
     end
   end
 end

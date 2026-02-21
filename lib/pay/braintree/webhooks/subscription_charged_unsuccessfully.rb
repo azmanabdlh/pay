@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # A subscription successfully moves to the next billing cycle. This will also occur when either a new transaction is created mid-cycle due to proration on an upgrade or a billing cycle is skipped due to the presence of a negative balance that covers the cost of the subscription.
 
 module Pay
