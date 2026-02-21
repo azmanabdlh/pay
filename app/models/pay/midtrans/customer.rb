@@ -49,7 +49,6 @@ module Pay
         payload = options[:payload] || {}
         payload[:transaction_details] ||= {}
         payload[:transaction_details][:order_id] ||= "midtrans-#{Pay::NanoId.generate}"
-        payload[:transaction_details][:gross_amount] ||= (amount / 100.0)
         payload[:custom_field1] ||= Pay::Midtrans.to_client_reference_id(owner)
         response = ::Midtrans.create_snap_token(payload)
         Pay::Midtrans::Charge.sync_from_order(payload[:transaction_details][:order_id], object: response.data)
