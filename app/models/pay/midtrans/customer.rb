@@ -33,43 +33,42 @@ module Pay
       def charge(amount, options = {})
         api_record unless processor_id?
 
-        payload = options[:payload] || {}
-        payload[:transaction_details] ||= {}
-        payload[:transaction_details][:order_id] ||= "midtrans-#{Pay::NanoId.generate}"
-        payload[:transaction_details][:gross_amount] ||= (amount / 100.0)
-        payload[:custom_field1] ||= Pay::Midtrans.to_client_reference_id(owner)
-        response = ::Midtrans.charge(payload)
-        Pay::Midtrans::Charge.sync_from_order(payload[:transaction_details][:order_id], object: response.data)
+        options[:transaction_details] ||= {}
+        options[:transaction_details][:order_id] ||= "midtrans-#{Pay::NanoId.generate}"
+        options[:transaction_details][:gross_amount] ||= (amount / 100.0)
+        options[:custom_field1] ||= Pay::Midtrans.to_client_reference_id(owner)
+        response = ::Midtrans.charge(options)
+        Pay::Midtrans::Charge.sync_from_order(options[:transaction_details][:order_id], object: response.data)
       rescue ::MidtransError => e
         raise Pay::Midtrans::Error, e.message
       end
 
       def checkout(**options)
         api_record unless processor_id?
-        payload = options[:payload] || {}
-        payload[:transaction_details] ||= {}
-        payload[:transaction_details][:order_id] ||= "midtrans-#{Pay::NanoId.generate}"
-        payload[:custom_field1] ||= Pay::Midtrans.to_client_reference_id(owner)
-        response = ::Midtrans.create_snap_token(payload)
-        Pay::Midtrans::Charge.sync_from_order(payload[:transaction_details][:order_id], object: response.data)
+
+        options[:transaction_details] ||= {}
+        options[:transaction_details][:order_id] ||= "midtrans-#{Pay::NanoId.generate}"
+        options[:custom_field1] ||= Pay::Midtrans.to_client_reference_id(owner)
+        response = ::Midtrans.create_snap_token(options)
+        Pay::Midtrans::Charge.sync_from_order(options[:transaction_details][:order_id], object: response.data)
       rescue ::MidtransError => e
         raise Pay::Midtrans::Error, e.message
       end
 
       def subscribe(name: Pay.default_product_name, plan: Pay.default_plan_name, **options)
         api_record unless processor_id?
-        payload = options[:payload] || {}
-        payload[:name] ||= name
-        payload[:amount] ||= (options[:amount] || 0) / 100.0
-        payload[:currency] ||= 'IDR'
-        payload[:schedule] ||= options[:schedule] || { interval: options[:interval] || 'month',
+
+        options[:name] ||= name
+        options[:amount] ||= (options[:amount] || 0) / 100.0
+        options[:currency] ||= 'IDR'
+        options[:schedule] ||= options[:schedule] || { interval: options[:interval] || 'month',
                                                        interval_count: options[:interval_count] || 1 }
-        payload[:metadata] ||= { pay_name: name, processor_plan: plan }
-        payload[:customer_details] ||= {}
-        payload[:customer_details][:email] ||= email
-        payload[:custom_field1] ||= Pay::Midtrans.to_client_reference_id(owner)
+        options[:metadata] ||= { pay_name: name, processor_plan: plan }
+        options[:customer_details] ||= {}
+        options[:customer_details][:email] ||= email
+        options[:custom_field1] ||= Pay::Midtrans.to_client_reference_id(owner)
         subscription_id = options[:subscription_id] || "sub-#{Pay::NanoId.generate}"
-        response = ::Midtrans.create_subscription(payload.merge(id: subscription_id))
+        response = ::Midtrans.create_subscription(options.merge(id: subscription_id))
         Pay::Midtrans::Subscription.sync(subscription_id, object: response.data, name: name)
       rescue ::MidtransError => e
         raise Pay::Midtrans::Error, e.message
