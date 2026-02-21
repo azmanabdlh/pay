@@ -5,10 +5,10 @@ module Pay
     module Webhooks
       class Expire
         def call(event)
-          order_id = event["order_id"]
+          order_id = event['order_id']
           return unless order_id
 
-          pay_charge = Pay::Midtrans::Charge.sync_from_order(order_id, object: event)
+          pay_charge = Pay::Midtrans::Charge.sync(order_id, object: event)
 
           return unless pay_charge && Pay.send_email?(:payment_expire, pay_charge)
 

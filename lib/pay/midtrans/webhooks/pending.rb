@@ -5,10 +5,10 @@ module Pay
     module Webhooks
       class Pending
         def call(event)
-          order_id = event["order_id"]
+          order_id = event['order_id']
           return unless order_id
 
-          Pay::Midtrans::Charge.sync_from_order(order_id, object: event)
+          Pay::Midtrans::Charge.sync(order_id, object: event)
         end
       end
     end
