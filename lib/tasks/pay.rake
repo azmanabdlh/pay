@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 namespace :pay do
   namespace :payment_methods do
     desc "Sync default payment methods for Pay::Customers"

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   class Payment
     attr_reader :intent
@@ -47,9 +49,9 @@ module Pay
 
     def validate
       if requires_payment_method?
-        raise Pay::InvalidPaymentMethod.new(self)
+        raise Pay::InvalidPaymentMethod, self
       elsif requires_action?
-        raise Pay::ActionRequired.new(self)
+        raise Pay::ActionRequired, self
       end
     end
   end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ActiveSupport::TestCase
   private
 
@@ -43,7 +45,7 @@ class ActiveSupport::TestCase
         },
         wallet: nil
       },
-      created: 123456789,
+      created: 123_456_789,
       customer: "cus_1234",
       livemode: false,
       metadata: {
@@ -61,9 +63,9 @@ class ActiveSupport::TestCase
         ::Stripe::Subscription.construct_from(
           id: "si_KjcLsWCXBgVRuU",
           object: "subscription_item",
-          created: 1638904425,
-          current_period_end: 1488987924,
-          current_period_start: 1486568724,
+          created: 1_638_904_425,
+          current_period_end: 1_488_987_924,
+          current_period_start: 1_486_568_724,
           metadata: {},
           price: {
             id: "large-monthly",
@@ -87,7 +89,7 @@ class ActiveSupport::TestCase
       application_fee_percent: nil,
       cancel_at: nil,
       cancel_at_period_end: false,
-      created: 1466783124,
+      created: 1_466_783_124,
       customer: "cus_1234",
       default_payment_method: nil,
       ended_at: nil,
@@ -115,19 +117,19 @@ class ActiveSupport::TestCase
             id: "si_1",
             object: "subscription_item",
             billing_threshold: nil,
-            created: 1638904425,
-            current_period_end: 1488987924,
-            current_period_start: 1486568724,
+            created: 1_638_904_425,
+            current_period_end: 1_488_987_924,
+            current_period_start: 1_486_568_724,
             metadata: {},
             price: {
               id: "default",
               object: "price",
               active: true,
               aggregate_usage: nil,
-              amount: 10000,
+              amount: 10_000,
               amount_decimal: "10000",
               billing_scheme: "per_unit",
-              created: 1571425606,
+              created: 1_571_425_606,
               currency: "usd",
               interval: "month",
               interval_count: 1,

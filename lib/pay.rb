@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "pay/version"
 require "pay/engine"
 require "pay/errors"
@@ -21,6 +23,7 @@ module Pay
   autoload :PaddleClassic, "pay/paddle_classic"
   autoload :LemonSqueezy, "pay/lemon_squeezy"
   autoload :Stripe, "pay/stripe"
+  autoload :Midtrans, "pay/midtrans"
 
   autoload :Webhooks, "pay/webhooks"
 
@@ -57,7 +60,7 @@ module Pay
   @@routes_path = "/pay"
 
   mattr_accessor :enabled_processors
-  @@enabled_processors = [:stripe, :braintree, :paddle_billing, :paddle_classic, :lemon_squeezy]
+  @@enabled_processors = %i[stripe braintree paddle_billing paddle_classic lemon_squeezy midtrans]
 
   mattr_accessor :send_emails
   @@send_emails = true
@@ -69,7 +72,7 @@ module Pay
   @@emails.receipt = true
   @@emails.refund = true
   # This only applies to Stripe, therefor we supply the second argument of price
-  @@emails.subscription_renewing = ->(pay_subscription, price) {
+  @@emails.subscription_renewing = lambda { |_pay_subscription, price|
     (price&.type == "recurring") && (price.recurring&.interval == "year")
   }
   @@emails.subscription_trial_will_end = true
@@ -91,7 +94,7 @@ module Pay
 
   # Should return a hash of arguments for the `mail` call in UserMailer
   mattr_accessor :mail_arguments
-  @@mail_arguments = -> {
+  @@mail_arguments = lambda {
     {
       to: instance_exec(&Pay.mail_to),
       subject: default_i18n_subject(application: Pay.application_name)
@@ -100,7 +103,7 @@ module Pay
 
   # Should return String or Array of email recipients
   mattr_accessor :mail_to
-  @@mail_to = -> {
+  @@mail_to = lambda {
     if ::ActionMailer::Base.respond_to?(:email_address_with_name)
       ::ActionMailer::Base.email_address_with_name(params[:pay_customer].email, params[:pay_customer].customer_name)
     else
@@ -138,7 +141,7 @@ module Pay
     stripe_checkout_session_id: ->(param) { Pay::Stripe.sync_checkout_session(param) },
     transaction_id: ->(param) { Pay::PaddleBilling.sync_transaction(param) },
     session_id: ->(param) { Pay::Stripe.sync_checkout_session(param) }
-  }
+  }.freeze
 
   def self.sync(params)
     SYNC_HANDLERS.each do |param_name, handler|

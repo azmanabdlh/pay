@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   class UserMailer < Pay.parent_mailer.constantize
     def receipt
@@ -29,6 +31,14 @@ module Pay
     end
 
     def payment_failed
+      mail mail_arguments
+    end
+
+    def payment_deny
+      mail mail_arguments
+    end
+
+    def payment_expire
       mail mail_arguments
     end
 

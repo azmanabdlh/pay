@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module Braintree
     class Subscription < Pay::Subscription
@@ -19,7 +21,9 @@ module Pay
           payment_method_id: object.payment_method_token,
           processor_plan: object.plan_id,
           status: object.status.parameterize(separator: "_"),
-          trial_ends_at: (object.created_at + object.trial_duration.send(object.trial_duration_unit) if object.trial_period)
+          trial_ends_at: (if object.trial_period
+                            object.created_at + object.trial_duration.send(object.trial_duration_unit)
+                          end)
         }
 
         # Canceled subscriptions should have access through the paid_through_date or updated_at
@@ -39,33 +43,32 @@ module Pay
         end
       rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
         try += 1
-        if try <= retries
-          sleep 0.1
-          retry
-        else
-          raise
-        end
+        raise unless try <= retries
+
+        sleep 0.1
+        retry
       end
 
-      def api_record(**options)
+      def api_record(**_options)
         gateway.subscription.find(processor_id)
       end
 
-      def cancel(**options)
+      def cancel(**_options)
         return if canceled?
 
         # Braintree doesn't allow canceling at period end while on trial, so trials are canceled immediately
         result = if on_trial?
           gateway.subscription.cancel(processor_id)
         else
-          gateway.subscription.update(processor_id, {number_of_billing_cycles: api_record.current_billing_cycle})
+          gateway.subscription.update(processor_id,
+            {number_of_billing_cycles: api_record.current_billing_cycle})
         end
         sync!(object: result.subscription)
       rescue ::Braintree::BraintreeError => e
         raise Pay::Braintree::Error, e
       end
 
-      def cancel_now!(**options)
+      def cancel_now!(**_options)
         return if canceled?
 
         result = gateway.subscription.cancel(processor_id)
@@ -91,9 +94,7 @@ module Pay
       end
 
       def resume
-        unless resumable?
-          raise Error, "You can only resume subscriptions within their grace period."
-        end
+        raise Error, "You can only resume subscriptions within their grace period." unless resumable?
 
         if canceled? && on_trial?
           duration = trial_ends_at.to_date - Date.today
@@ -131,7 +132,7 @@ module Pay
         end
 
         braintree_plan = find_braintree_plan(plan)
-        prorate = options.fetch(:prorate) { true }
+        prorate = options.fetch(:prorate, true)
 
         if would_change_billing_frequency?(braintree_plan) && prorate
           swap_across_frequencies(braintree_plan)
@@ -162,9 +163,9 @@ module Pay
           true # submit for settlement
         )
 
-        if result.success?
-          update(status: :active)
-        end
+        return unless result.success?
+
+        update(status: :active)
       end
 
       private
@@ -202,9 +203,7 @@ module Pay
 
       def discount_for_switching_to_yearly(amount: 0)
         api_record.discounts.each do |discount|
-          if discount.id == "plan-credit"
-            amount += discount.amount * discount.number_of_billing_cycles
-          end
+          amount += discount.amount * discount.number_of_billing_cycles if discount.id == "plan-credit"
         end
 
         ActiveSupport::InheritableOptions.new(amount: amount, number_of_billing_cycles: 1)
@@ -221,7 +220,7 @@ module Pay
 
         options = {}
 
-        if discount.amount > 0 && discount.number_of_billing_cycles > 0
+        if discount.amount.positive? && discount.number_of_billing_cycles.positive?
           options = {
             discounts: {
               add: [

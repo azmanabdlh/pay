@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 class Pay::Stripe::CustomerTest < ActiveSupport::TestCase
@@ -400,7 +402,7 @@ class Pay::Stripe::CustomerTest < ActiveSupport::TestCase
     pay_customer = pay_customers(:stripe)
     attributes = {metadata: {foo: :bar}}
 
-    User.pay_stripe_customer_attributes = ->(pay_customer) { attributes }
+    User.pay_stripe_customer_attributes = ->(_pay_customer) { attributes }
     assert attributes <= pay_customer.api_record_attributes
   ensure
     User.pay_stripe_customer_attributes = original_value

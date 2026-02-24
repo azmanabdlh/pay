@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module PaddleClassic
     class Charge < Pay::Charge
@@ -15,10 +17,11 @@ module Pay
 
       def refund!(amount_to_refund = nil)
         return unless customer.subscription
+
         amount_to_refund ||= amount
 
         payments = PaddleClassic.client.payments.list(subscription_id: customer.subscription.processor_id, is_paid: 1)
-        raise Error, "Payment not found" unless payments.total > 0
+        raise Error, "Payment not found" unless payments.total.positive?
 
         PaddleClassic.client.payments.refund(order_id: payments.data.last[:id], amount: amount_to_refund)
         update(amount_refunded: amount_to_refund)

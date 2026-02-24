@@ -1,19 +1,25 @@
+# frozen_string_literal: true
+
 module Pay
   module Stripe
     class PaymentMethod < Pay::PaymentMethod
       # Syncs a PaymentIntent's payment method to the database
       def self.sync_payment_intent(id, stripe_account: nil)
-        payment_intent = ::Stripe::PaymentIntent.retrieve({id: id, expand: ["payment_method"]}, {stripe_account: stripe_account}.compact)
+        payment_intent = ::Stripe::PaymentIntent.retrieve({id: id, expand: ["payment_method"]},
+          {stripe_account: stripe_account}.compact)
         payment_method = payment_intent.payment_method
         return unless payment_method
+
         Pay::Stripe::PaymentMethod.sync(payment_method.id, object: payment_method)
       end
 
       # Syncs a SetupIntent's payment method to the database
       def self.sync_setup_intent(id, stripe_account: nil)
-        setup_intent = ::Stripe::SetupIntent.retrieve({id: id, expand: ["payment_method"]}, {stripe_account: stripe_account}.compact)
+        setup_intent = ::Stripe::SetupIntent.retrieve({id: id, expand: ["payment_method"]},
+          {stripe_account: stripe_account}.compact)
         payment_method = setup_intent.payment_method
         return unless payment_method
+
         Pay::Stripe::PaymentMethod.sync(payment_method.id, object: payment_method)
       end
 
@@ -41,13 +47,11 @@ module Pay
         pay_payment_method.update!(attributes)
         pay_payment_method
       rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
-        if try > retries
-          raise
-        else
-          try += 1
-          sleep 0.15**try
-          retry
-        end
+        raise if try > retries
+
+        try += 1
+        sleep 0.15**try
+        retry
       end
 
       # Extracts payment method details from a Stripe::PaymentMethod object
@@ -69,7 +73,8 @@ module Pay
       def make_default!
         return if default?
 
-        ::Stripe::Customer.update(customer.processor_id, {invoice_settings: {default_payment_method: processor_id}}, stripe_options)
+        ::Stripe::Customer.update(customer.processor_id, {invoice_settings: {default_payment_method: processor_id}},
+          stripe_options)
 
         customer.payment_methods.update_all(default: false)
         update!(default: true)

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # A subscription reaches the specified number of billing cycles and expires.
 
 module Pay

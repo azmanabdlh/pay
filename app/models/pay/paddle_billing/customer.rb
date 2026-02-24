@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module PaddleBilling
     class Customer < Pay::Customer
@@ -38,7 +40,7 @@ module Pay
         ::Paddle::Customer.update(id: processor_id, **api_record_attributes.merge(attributes))
       end
 
-      def charge(amount, options = {})
+      def charge(_amount, options = {})
         return Pay::Error unless options
 
         items = options[:items]
@@ -65,7 +67,7 @@ module Pay
 
       # Paddle does not use payment method tokens. The method signature has it here
       # to have a uniform API with the other payment processors.
-      def add_payment_method(token = nil, default: true)
+      def add_payment_method(_token = nil, default: true)
         Pay::PaddleBilling::PaymentMethod.sync(pay_customer: self)
       end
     end

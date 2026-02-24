@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 class Pay::Braintree::ErrorTest < ActiveSupport::TestCase
@@ -10,13 +12,11 @@ class Pay::Braintree::ErrorTest < ActiveSupport::TestCase
   end
 
   test "re-raising braintree exceptions keep the same message" do
-    exception = assert_raises(Pay::Braintree::Error) {
-      begin
-        raise ::Braintree::AuthorizationError, "Oh no!"
-      rescue ::Braintree::AuthorizationError => e
-        raise Pay::Braintree::Error, e
-      end
-    }
+    exception = assert_raises(Pay::Braintree::Error) do
+      raise ::Braintree::AuthorizationError, "Oh no!"
+    rescue ::Braintree::AuthorizationError => e
+      raise Pay::Braintree::Error, e
+    end
     assert_match "Oh no!", exception.to_s
     assert_equal ::Braintree::AuthorizationError, exception.cause.class
   end

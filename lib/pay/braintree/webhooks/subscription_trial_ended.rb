@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # A subscription's trial period ends.
 
 module Pay

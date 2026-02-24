@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module Receipts
     def receipt_filename
@@ -33,19 +35,23 @@ module Pay
 
       if try(:stripe_invoice)
         stripe_invoice.lines.auto_paging_each do |line|
-          items << [line.description, line.quantity, Pay::Currency.format(line.pricing.unit_amount_decimal, currency: line.currency), Pay::Currency.format(line.amount, currency: line.currency)]
+          items << [line.description, line.quantity,
+            Pay::Currency.format(line.pricing.unit_amount_decimal, currency: line.currency), Pay::Currency.format(line.amount, currency: line.currency)]
 
           line.discounts.each do |discount_id|
             discount = stripe_invoice.total_discount_amounts.find { |d| d.discount.id == discount_id }
-            items << [discount_description(discount), nil, nil, Pay::Currency.format(-discount.amount, currency: currency)]
+            items << [discount_description(discount), nil, nil,
+              Pay::Currency.format(-discount.amount, currency: currency)]
           end
         end
       else
-        items << [pdf_product_name, 1, Pay::Currency.format(amount, currency: currency), Pay::Currency.format(amount, currency: currency)]
+        items << [pdf_product_name, 1, Pay::Currency.format(amount, currency: currency),
+          Pay::Currency.format(amount, currency: currency)]
       end
 
       # If no subtotal, we will display the total
-      items << [nil, nil, I18n.t("pay.line_items.subtotal"), Pay::Currency.format(try(:stripe_invoice)&.subtotal || amount, currency: currency)]
+      items << [nil, nil, I18n.t("pay.line_items.subtotal"),
+        Pay::Currency.format(try(:stripe_invoice)&.subtotal || amount, currency: currency)]
 
       # Discounts on the invoice
       try(:stripe_invoice)&.discounts&.each do |discount_id|
@@ -55,12 +61,14 @@ module Pay
 
       # Total excluding tax
       if try(:stripe_invoice)
-        items << [nil, nil, I18n.t("pay.line_items.total"), Pay::Currency.format(stripe_invoice.total_excluding_tax, currency: currency)]
+        items << [nil, nil, I18n.t("pay.line_items.total"),
+          Pay::Currency.format(stripe_invoice.total_excluding_tax, currency: currency)]
       end
 
       # Tax rates
       try(:stripe_invoice)&.total_taxes&.each do |tax|
         next if tax.amount.zero?
+
         # tax_rate = ::Stripe::TaxRate.retrieve(tax.tax_rate_details.tax_rate)
         items << [nil, nil, I18n.t("pay.line_items.tax"), Pay::Currency.format(tax.amount, currency: currency)]
       end
@@ -75,9 +83,11 @@ module Pay
       name = coupon.name
 
       if (percent = coupon.percent_off)
-        I18n.t("pay.line_items.percent_discount", name: name, percent: ActiveSupport::NumberHelper.number_to_rounded(percent, strip_insignificant_zeros: true))
+        I18n.t("pay.line_items.percent_discount", name: name,
+          percent: ActiveSupport::NumberHelper.number_to_rounded(percent, strip_insignificant_zeros: true))
       else
-        I18n.t("pay.line_items.amount_discount", name: name, amount: Pay::Currency.format(coupon.amount_off, currency: coupon.currency))
+        I18n.t("pay.line_items.amount_discount", name: name,
+          amount: Pay::Currency.format(coupon.amount_off, currency: coupon.currency))
       end
     end
 
@@ -102,7 +112,8 @@ module Pay
         #     line_items << [nil, nil, I18n.t("pay.receipt.refunded_on", date: I18n.l(refunded_at, format: :long)), Pay::Currency.format(refund["amount"], currency: refund["currency"])]
         #   end
         # else
-        line_items << [nil, nil, I18n.t("pay.receipt.refunded"), Pay::Currency.format(amount_refunded, currency: currency)]
+        line_items << [nil, nil, I18n.t("pay.receipt.refunded"),
+          Pay::Currency.format(amount_refunded, currency: currency)]
         # end
       end
 

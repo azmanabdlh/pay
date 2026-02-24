@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module PaddleBilling
     class PaymentMethod < Pay::PaymentMethod
@@ -5,6 +7,7 @@ module Pay
         transaction = ::Paddle::Transaction.retrieve(id: transaction)
         return unless transaction.status == "completed"
         return if transaction.payments.empty?
+
         sync(pay_customer: pay_customer, attributes: transaction.payments.first)
       end
 
@@ -27,12 +30,10 @@ module Pay
         payment_method
       rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
         try += 1
-        if try <= retries
-          sleep 0.1
-          retry
-        else
-          raise
-        end
+        raise unless try <= retries
+
+        sleep 0.1
+        retry
       end
 
       def make_default!

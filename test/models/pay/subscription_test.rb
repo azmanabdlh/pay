@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 class Pay::Subscription::Test < ActiveSupport::TestCase
@@ -214,7 +216,8 @@ class Pay::Subscription::Test < ActiveSupport::TestCase
 
   test "active_or_paused scope should include paused subscriptions" do
     paused_subscription = create_subscription(status: "paused")
-    paused_subscription2 = create_subscription(status: "active", pause_behavior: "void", pause_starts_at: 1.day.from_now)
+    paused_subscription2 = create_subscription(status: "active", pause_behavior: "void",
+      pause_starts_at: 1.day.from_now)
     subscriptions = Pay::Subscription.active_or_paused
     assert_includes subscriptions, paused_subscription
     assert_includes subscriptions, paused_subscription2

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "base64"
 require "json"
 require "openssl"
@@ -31,7 +33,7 @@ module Pay
           data.each { |key, value| data[key] = String(value) }
 
           # Sort the data
-          data_sorted = data.sort_by { |key, value| key }
+          data_sorted = data.sort_by { |key, _value| key }
 
           # and serialize the fields
           # serialization library is available here: https://github.com/jqr/php-serialize
@@ -99,17 +101,16 @@ module Pay
           when FalseClass, TrueClass
             s << "b:#{var ? 1 : 0};"
           else
-            if var.respond_to?(:to_assoc)
-              v = var.to_assoc
-              # encode as Object with same name
-              s << "O:#{var.class.to_s.bytesize}:\"#{var.class.to_s.downcase}\":#{v.length}:{"
-              v.each do |k, v|
-                s << "#{serialize(k.to_s, assoc)}#{serialize(v, assoc)}"
-              end
-              s << "}"
-            else
-              raise TypeError, "Unable to serialize type #{var.class}"
+            raise TypeError, "Unable to serialize type #{var.class}" unless var.respond_to?(:to_assoc)
+
+            v = var.to_assoc
+            # encode as Object with same name
+            s << "O:#{var.class.to_s.bytesize}:\"#{var.class.to_s.downcase}\":#{v.length}:{"
+            v.each do |k, v|
+              s << "#{serialize(k.to_s, assoc)}#{serialize(v, assoc)}"
             end
+            s << "}"
+
           end
           s
         end

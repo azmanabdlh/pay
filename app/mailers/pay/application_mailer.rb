@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   class ApplicationMailer < ActionMailer::Base
     def self.default_from_address

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module Stripe
     class Error < Pay::Error
@@ -36,7 +38,8 @@ module Pay
     def self.enabled?
       return false unless Pay.enabled_processors.include?(:stripe) && defined?(::Stripe)
 
-      Pay::Engine.version_matches?(required: REQUIRED_VERSION, current: ::Stripe::VERSION) || (raise "[Pay] stripe gem must be version #{REQUIRED_VERSION}")
+      Pay::Engine.version_matches?(required: REQUIRED_VERSION,
+        current: ::Stripe::VERSION) || (raise "[Pay] stripe gem must be version #{REQUIRED_VERSION}")
     end
 
     def self.setup
@@ -124,7 +127,11 @@ module Pay
     end
 
     def self.to_client_reference_id(record)
-      raise ArgumentError, "#{record.class.name} does not include Pay. Allowed models: #{model_names.to_a.join(", ")}" unless model_names.include?(record.class.name)
+      unless model_names.include?(record.class.name)
+        raise ArgumentError,
+          "#{record.class.name} does not include Pay. Allowed models: #{model_names.to_a.join(", ")}"
+      end
+
       [record.class.name, record.id].join("_")
     end
 
@@ -144,7 +151,9 @@ module Pay
 
     # Subscriptions aren't always immediately associated, so we want to retry by default
     def self.sync_checkout_session(session_id, stripe_account: nil, try: 0, retries: 5)
-      checkout_session = ::Stripe::Checkout::Session.retrieve({id: session_id, expand: ["payment_intent.latest_charge"]}, {stripe_account: stripe_account}.compact)
+      checkout_session = ::Stripe::Checkout::Session.retrieve(
+        {id: session_id, expand: ["payment_intent.latest_charge"]}, {stripe_account: stripe_account}.compact
+      )
       case checkout_session.mode
       when "payment"
         if (id = checkout_session.payment_intent.try(:latest_charge)&.id)
@@ -154,13 +163,11 @@ module Pay
         Pay::Stripe::Subscription.sync(checkout_session.subscription, stripe_account: stripe_account)
       end
     rescue ::Stripe::InvalidRequestError
-      if try > retries
-        raise
-      else
-        try += 1
-        sleep 0.15**try
-        retry
-      end
+      raise if try > retries
+
+      try += 1
+      sleep 0.15**try
+      retry
     end
   end
 end

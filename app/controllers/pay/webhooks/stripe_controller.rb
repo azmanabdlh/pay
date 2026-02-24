@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module Webhooks
     class StripeController < Pay::ApplicationController
@@ -32,6 +34,7 @@ module Pay
           return ::Stripe::Webhook.construct_event(payload, signature, secret.to_s)
         rescue ::Stripe::SignatureVerificationError
           raise if i == possible_secrets.length - 1
+
           next
         end
       end
@@ -39,7 +42,9 @@ module Pay
       def secrets(payload, signature)
         secret = Pay::Stripe.signing_secret
         return Array.wrap(secret) if secret
-        raise ::Stripe::SignatureVerificationError.new("Cannot verify signature without a Stripe signing secret", signature, http_body: payload)
+
+        raise ::Stripe::SignatureVerificationError.new("Cannot verify signature without a Stripe signing secret",
+          signature, http_body: payload)
       end
 
       def log_error(e)

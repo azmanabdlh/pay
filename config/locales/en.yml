@@ -63,3 +63,7 @@ en:
         subject: "[%{application}] Your trial is ending soon"
       subscription_trial_ended:
         subject: "[%{application}] Your trial has ended"
+      payment_deny:
+        subject: "[%{application}] Your payment was denied"
+      payment_expire:
+        subject: "[%{application}] Your payment expired"

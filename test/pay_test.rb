@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 class Pay::Test < ActiveSupport::TestCase
@@ -116,7 +118,7 @@ class Pay::Test < ActiveSupport::TestCase
   test "can disable all emails with a boolean" do
     original_send_email_value = Pay.send_emails
 
-    Pay.emails.keys.each do |mail_action|
+    Pay.emails.each_key do |mail_action|
       Pay.emails.stub mail_action, true do
         assert Pay.send_email?(mail_action)
       end
@@ -124,7 +126,7 @@ class Pay::Test < ActiveSupport::TestCase
 
     Pay.send_emails = false
 
-    Pay.emails.keys.each do |mail_action|
+    Pay.emails.each_key do |mail_action|
       refute Pay.send_email?(mail_action)
     end
   ensure
@@ -134,7 +136,7 @@ class Pay::Test < ActiveSupport::TestCase
   test "can disable all emails with a lambda" do
     original_send_email_value = Pay.send_emails
 
-    Pay.emails.keys.each do |mail_action|
+    Pay.emails.each_key do |mail_action|
       Pay.emails.stub mail_action, true do
         assert Pay.send_email?(mail_action)
       end
@@ -142,7 +144,7 @@ class Pay::Test < ActiveSupport::TestCase
 
     Pay.send_emails = -> { false }
 
-    Pay.emails.keys.each do |mail_action|
+    Pay.emails.each_key do |mail_action|
       refute Pay.send_email?(mail_action)
     end
   ensure

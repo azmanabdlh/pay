@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   # https://avdi.codes/exception-causes-in-ruby-2-1/
   class Error < StandardError

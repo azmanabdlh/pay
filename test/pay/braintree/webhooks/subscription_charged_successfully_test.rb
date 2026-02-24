@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 class Pay::Braintree::Webhooks::SubscriptionChargedSuccessfullyTest < ActiveSupport::TestCase
@@ -20,6 +22,7 @@ class Pay::Braintree::Webhooks::SubscriptionChargedSuccessfullyTest < ActiveSupp
       Pay::Braintree::Webhooks::SubscriptionChargedSuccessfully.new.call(@event)
     end
 
-    assert_equal pay_subscription, Pay::Charge.find_by!(processor_id: @event.subscription.transactions.first.id).subscription
+    assert_equal pay_subscription,
+      Pay::Charge.find_by!(processor_id: @event.subscription.transactions.first.id).subscription
   end
 end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module Stripe
     module Webhooks
@@ -13,12 +15,12 @@ module Pay
           pay_subscription = Pay::Subscription.find_by_processor_and_id(:stripe, subscription_id)
           return if pay_subscription.nil? || pay_subscription.status == "incomplete"
 
-          if Pay.send_email?(:payment_failed, pay_subscription)
-            Pay.mailer.with(
-              pay_customer: pay_subscription.customer,
-              stripe_invoice: invoice
-            ).payment_failed.deliver_now
-          end
+          return unless Pay.send_email?(:payment_failed, pay_subscription)
+
+          Pay.mailer.with(
+            pay_customer: pay_subscription.customer,
+            stripe_invoice: invoice
+          ).payment_failed.deliver_now
         end
       end
     end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module PaddleClassic
     module Webhooks
@@ -43,9 +45,9 @@ module Pay
         end
 
         def notify_user(pay_charge)
-          if Pay.send_email?(:receipt, pay_charge)
-            Pay.mailer.with(pay_customer: pay_charge.customer, pay_charge: pay_charge).receipt.deliver_later
-          end
+          return unless Pay.send_email?(:receipt, pay_charge)
+
+          Pay.mailer.with(pay_customer: pay_charge.customer, pay_charge: pay_charge).receipt.deliver_later
         end
       end
     end

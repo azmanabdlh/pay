@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module PaddleClassic
     module Webhooks
@@ -10,7 +12,9 @@ module Pay
           case event["status"]
           when "deleted"
             pay_subscription.status = "canceled"
-            pay_subscription.ends_at = Time.zone.parse(event["next_bill_date"]) || Time.current if pay_subscription.ends_at.blank?
+            if pay_subscription.ends_at.blank?
+              pay_subscription.ends_at = Time.zone.parse(event["next_bill_date"]) || Time.current
+            end
           when "trialing"
             pay_subscription.status = "trialing"
             pay_subscription.trial_ends_at = Time.zone.parse(event["next_bill_date"])

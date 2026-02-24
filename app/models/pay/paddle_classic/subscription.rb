@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module PaddleClassic
     class Subscription < Pay::Subscription
@@ -50,14 +52,14 @@ module Pay
         end
       end
 
-      def api_record(**options)
+      def api_record(**_options)
         PaddleClassic.client.users.list(subscription_id: processor_id).data.try(:first)
       rescue ::Paddle::Error => e
         raise Pay::PaddleClassic::Error, e
       end
 
       # Paddle subscriptions are canceled immediately, however we still want to give the user access to the end of the period they paid for
-      def cancel(**options)
+      def cancel(**_options)
         return if canceled?
 
         ends_at = if on_trial?
@@ -80,7 +82,7 @@ module Pay
         raise Pay::PaddleClassic::Error, e
       end
 
-      def cancel_now!(**options)
+      def cancel_now!(**_options)
         return if canceled?
 
         PaddleClassic.client.users.cancel(subscription_id: processor_id)
@@ -118,9 +120,7 @@ module Pay
       end
 
       def resume
-        unless resumable?
-          raise Error, "You can only resume paused subscriptions."
-        end
+        raise Error, "You can only resume paused subscriptions." unless resumable?
 
         PaddleClassic.client.users.unpause(subscription_id: processor_id)
         update(ends_at: nil, status: :active, pause_starts_at: nil)
@@ -131,7 +131,7 @@ module Pay
       def swap(plan, **options)
         raise ArgumentError, "plan must be a string" unless plan.is_a?(String)
 
-        attributes = {plan_id: plan, prorate: options.fetch(:prorate) { true }}
+        attributes = {plan_id: plan, prorate: options.fetch(:prorate, true)}
         attributes[:quantity] = quantity if quantity?
         PaddleClassic.client.users.update(subscription_id: processor_id, **attributes)
 

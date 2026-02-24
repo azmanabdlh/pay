@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 class Pay::Stripe::Webhooks::SubscriptionRenewingTest < ActiveSupport::TestCase
@@ -14,7 +16,7 @@ class Pay::Stripe::Webhooks::SubscriptionRenewingTest < ActiveSupport::TestCase
       object: "price",
       active: true,
       billing_scheme: "per_unit",
-      created: 1673394102,
+      created: 1_673_394_102,
       currency: "usd",
       custom_unit_amount: nil,
       livemode: false,
@@ -49,7 +51,7 @@ class Pay::Stripe::Webhooks::SubscriptionRenewingTest < ActiveSupport::TestCase
       object: "price",
       active: true,
       billing_scheme: "per_unit",
-      created: 1673394102,
+      created: 1_673_394_102,
       currency: "usd",
       custom_unit_amount: nil,
       livemode: false,
@@ -89,6 +91,7 @@ class Pay::Stripe::Webhooks::SubscriptionRenewingTest < ActiveSupport::TestCase
   private
 
   def create_subscription(processor_id:)
-    @pay_customer.subscriptions.create!(processor_id: processor_id, name: "default", processor_plan: "some-plan", status: "active")
+    @pay_customer.subscriptions.create!(processor_id: processor_id, name: "default", processor_plan: "some-plan",
+      status: "active")
   end
 end

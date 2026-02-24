@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module LemonSqueezy
     class Error < Pay::Error
@@ -15,7 +17,8 @@ module Pay
     def self.enabled?
       return false unless Pay.enabled_processors.include?(:lemon_squeezy) && defined?(::LemonSqueezy)
 
-      Pay::Engine.version_matches?(required: "~> 1.0", current: ::LemonSqueezy::VERSION) || (raise "[Pay] lemonsqueezy gem must be version ~> 1.0")
+      Pay::Engine.version_matches?(required: "~> 1.0",
+        current: ::LemonSqueezy::VERSION) || (raise "[Pay] lemonsqueezy gem must be version ~> 1.0")
     end
 
     def self.setup
@@ -34,7 +37,7 @@ module Pay
       find_value_by_name(:lemon_squeezy, :signing_secret)
     end
 
-    def self.passthrough(owner:, **options)
+    def self.passthrough(owner:, **_options)
       owner.to_sgid.to_s
     end
 
@@ -84,9 +87,9 @@ module Pay
         end
       end
 
-      if subscriptions.empty?
-        Pay::LemonSqueezy::Charge.sync_order(order_id, object: object)
-      end
+      return unless subscriptions.empty?
+
+      Pay::LemonSqueezy::Charge.sync_order(order_id, object: object)
     end
   end
 end

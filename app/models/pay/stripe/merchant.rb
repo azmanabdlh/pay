@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module Stripe
     class Merchant < Pay::Merchant
@@ -27,7 +29,7 @@ module Pay
       end
 
       # A single-use login link for Express accounts to access their Stripe dashboard
-      def login_link(**options)
+      def login_link(**_options)
         ::Stripe::Account.create_login_link(processor_id)
       rescue ::Stripe::StripeError => e
         raise Pay::Stripe::Error, e

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module PaddleBilling
     class Subscription < Pay::Subscription
@@ -65,12 +67,10 @@ module Pay
         end
       rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
         try += 1
-        if try <= retries
-          sleep 0.1
-          retry
-        else
-          raise
-        end
+        raise unless try <= retries
+
+        sleep 0.1
+        retry
       end
 
       def api_record(**options)
@@ -143,9 +143,7 @@ module Pay
       end
 
       def resume
-        unless resumable?
-          raise Error, "You can only resume paused subscriptions."
-        end
+        raise Error, "You can only resume paused subscriptions." unless resumable?
 
         # Paddle Billing API only allows "resuming" subscriptions when they are paused
         # So cancel the scheduled change if it is in the future

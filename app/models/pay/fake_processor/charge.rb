@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 module Pay
   module FakeProcessor
     class Charge < Pay::Charge
-      def self.sync(processor_id)
+      def self.sync(_processor_id)
         true
       end
 

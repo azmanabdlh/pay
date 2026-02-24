@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module FakeProcessor
     class PaymentMethod < Pay::PaymentMethod

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module PaddleClassic
     class Customer < Pay::Customer
@@ -16,7 +18,8 @@ module Pay
         return unless subscription.processor_id
         raise Pay::Error, "A charge_name is required to create a one-time charge" if options[:charge_name].nil?
 
-        response = PaddleClassic.client.charges.create(subscription_id: subscription.processor_id, amount: amount.to_f / 100, charge_name: options[:charge_name])
+        response = PaddleClassic.client.charges.create(subscription_id: subscription.processor_id,
+          amount: amount.to_f / 100, charge_name: options[:charge_name])
 
         attributes = {
           amount: (response[:amount].to_f * 100).to_i,
@@ -40,7 +43,7 @@ module Pay
 
       # Paddle does not use payment method tokens. The method signature has it here
       # to have a uniform API with the other payment processors.
-      def add_payment_method(token = nil, default: true)
+      def add_payment_method(_token = nil, default: true)
         Pay::PaddleClassic::PaymentMethod.sync(pay_customer: self)
       end
     end

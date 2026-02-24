@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 
 class Pay::Stripe::ChargeTest < ActiveSupport::TestCase
@@ -44,15 +46,18 @@ class Pay::Stripe::ChargeTest < ActiveSupport::TestCase
   end
 
   test "sync associates charge with stripe subscription" do
-    ::Stripe::InvoicePayment.stubs(:list).returns(::Stripe::ListObject.construct_from(object: :list, data: [fake_stripe_invoice_payment]))
+    ::Stripe::InvoicePayment.stubs(:list).returns(::Stripe::ListObject.construct_from(object: :list,
+      data: [fake_stripe_invoice_payment]))
     ::Stripe::Invoice.stubs(:retrieve).returns(fake_stripe_invoice_payment.invoice)
-    pay_subscription = @pay_customer.subscriptions.create!(processor_id: "sub_1234", name: "default", processor_plan: "some-plan", status: "active")
+    pay_subscription = @pay_customer.subscriptions.create!(processor_id: "sub_1234", name: "default",
+      processor_plan: "some-plan", status: "active")
     pay_charge = Pay::Stripe::Charge.sync("123", object: fake_stripe_charge(invoice: fake_stripe_invoice))
     assert_equal pay_subscription, pay_charge.subscription
   end
 
   test "sync records stripe invoice" do
-    ::Stripe::InvoicePayment.stubs(:list).returns(::Stripe::ListObject.construct_from(object: :list, data: [fake_stripe_invoice_payment]))
+    ::Stripe::InvoicePayment.stubs(:list).returns(::Stripe::ListObject.construct_from(object: :list,
+      data: [fake_stripe_invoice_payment]))
     ::Stripe::Invoice.stubs(:retrieve).returns(fake_stripe_invoice_payment.invoice)
     pay_charge = Pay::Stripe::Charge.sync("123", object: fake_stripe_charge(invoice: fake_stripe_invoice))
     assert_instance_of ::Stripe::Invoice, pay_charge.stripe_invoice
@@ -60,7 +65,8 @@ class Pay::Stripe::ChargeTest < ActiveSupport::TestCase
   end
 
   test "sync records stripe receipt_url" do
-    ::Stripe::InvoicePayment.stubs(:list).returns(::Stripe::ListObject.construct_from(object: :list, data: [fake_stripe_invoice_payment]))
+    ::Stripe::InvoicePayment.stubs(:list).returns(::Stripe::ListObject.construct_from(object: :list,
+      data: [fake_stripe_invoice_payment]))
     ::Stripe::Invoice.stubs(:retrieve).returns(fake_stripe_invoice_payment.invoice)
     pay_charge = Pay::Stripe::Charge.sync("123", object: fake_stripe_charge)
     assert_equal "https://pay.stripe.com/receipts/test_receipt", pay_charge.stripe_receipt_url
@@ -76,7 +82,8 @@ class Pay::Stripe::ChargeTest < ActiveSupport::TestCase
   end
 
   test "sync stripe charge with Link" do
-    ::Stripe::InvoicePayment.stubs(:list).returns(::Stripe::ListObject.construct_from(object: :list, data: [fake_stripe_invoice_payment]))
+    ::Stripe::InvoicePayment.stubs(:list).returns(::Stripe::ListObject.construct_from(object: :list,
+      data: [fake_stripe_invoice_payment]))
     ::Stripe::Invoice.stubs(:retrieve).returns(fake_stripe_invoice_payment.invoice)
     pay_charge = Pay::Stripe::Charge.sync("123", object: fake_stripe_charge(
       payment_method: "pm_0Mt5J5NFr9vQLFLbmIyjBdIM",
@@ -92,7 +99,8 @@ class Pay::Stripe::ChargeTest < ActiveSupport::TestCase
   end
 
   test "sync stripe charge balance_transaction" do
-    ::Stripe::InvoicePayment.stubs(:list).returns(::Stripe::ListObject.construct_from(object: :list, data: [fake_stripe_invoice_payment]))
+    ::Stripe::InvoicePayment.stubs(:list).returns(::Stripe::ListObject.construct_from(object: :list,
+      data: [fake_stripe_invoice_payment]))
     ::Stripe::Invoice.stubs(:retrieve).returns(fake_stripe_invoice_payment.invoice)
     pay_charge = Pay::Stripe::Charge.sync("123", object: fake_stripe_charge)
     assert_instance_of ::Stripe::BalanceTransaction, pay_charge.stripe_object.balance_transaction
@@ -102,7 +110,8 @@ class Pay::Stripe::ChargeTest < ActiveSupport::TestCase
     @pay_customer.update(processor_id: nil)
     @pay_customer.update_payment_method payment_method
     invoice = ::Stripe::Invoice.create(customer: @pay_customer.processor_id)
-    ::Stripe::InvoiceItem.create(customer: @pay_customer.processor_id, invoice: invoice.id, amount: 1900, discounts: [{coupon: "sirmAxRi"}])
+    ::Stripe::InvoiceItem.create(customer: @pay_customer.processor_id, invoice: invoice.id, amount: 1900,
+      discounts: [{coupon: "sirmAxRi"}])
     invoice.pay
     invoice_payments = ::Stripe::InvoicePayment.list(invoice: invoice.id)
     charge = Pay::Stripe::Charge.sync_payment_intent(invoice_payments.first.payment.payment_intent)
@@ -120,7 +129,7 @@ class Pay::Stripe::ChargeTest < ActiveSupport::TestCase
       object: "invoice_payment",
       amount_paid: 2000,
       amount_requested: 2000,
-      created: 1391288554,
+      created: 1_391_288_554,
       currency: "usd",
       invoice: fake_stripe_invoice,
       is_default: true,
@@ -132,7 +141,7 @@ class Pay::Stripe::ChargeTest < ActiveSupport::TestCase
       status: "paid",
       status_transitions: {
         canceled_at: nil,
-        paid_at: 1391288554
+        paid_at: 1_391_288_554
       }
     )
     ::Stripe::InvoicePayment.construct_from(values)
@@ -162,7 +171,7 @@ class Pay::Stripe::ChargeTest < ActiveSupport::TestCase
             object: "tax_rate",
             active: false,
             country: "US",
-            created: 1643833387,
+            created: 1_643_833_387,
             description: nil,
             display_name: "Sales Tax",
             inclusive: false,
@@ -177,7 +186,9 @@ class Pay::Stripe::ChargeTest < ActiveSupport::TestCase
       ],
       discounts: ["di_1KgYwKKXBGcbgpbZXaYJPeyI"],
       total_discount_amounts: [
-        {amount: 12450, discount: {id: "di_1KgYwKKXBGcbgpbZXaYJPeyI", object: "discount", checkout_session: nil, coupon: {id: "upI7E8nG", object: "coupon", amount_off: nil, created: 1648059609, currency: nil, duration: "forever", duration_in_month: nil, livemode: false, max_redemptions: nil, metadata: {}, name: "Half Off", percent_off: 50.0, redeem_by: nil, times_redeemed: 3, valid: true}, customer: "cus_LNFszTN0gcJ4RH", end: nil, invoice: nil, invoice_item: "ii_1KgYwHKXBGcbgpbZVuQ152QU", promotion_code: nil, start: 1648060185, subscription: nil}}
+        {amount: 12_450,
+         discount: {id: "di_1KgYwKKXBGcbgpbZXaYJPeyI", object: "discount", checkout_session: nil,
+                    coupon: {id: "upI7E8nG", object: "coupon", amount_off: nil, created: 1_648_059_609, currency: nil, duration: "forever", duration_in_month: nil, livemode: false, max_redemptions: nil, metadata: {}, name: "Half Off", percent_off: 50.0, redeem_by: nil, times_redeemed: 3, valid: true}, customer: "cus_LNFszTN0gcJ4RH", end: nil, invoice: nil, invoice_item: "ii_1KgYwHKXBGcbgpbZVuQ152QU", promotion_code: nil, start: 1_648_060_185, subscription: nil}}
       ]
     )
     ::Stripe::Invoice.construct_from(values)
@@ -195,8 +206,8 @@ class Pay::Stripe::ChargeTest < ActiveSupport::TestCase
         id: "txn_1MiN3gLkdIwHu7ixxapQrznl",
         object: "balance_transaction",
         amount: -400,
-        available_on: 1678043844,
-        created: 1678043844,
+        available_on: 1_678_043_844,
+        created: 1_678_043_844,
         currency: "usd",
         description: nil,
         exchange_rate: nil,
@@ -208,7 +219,7 @@ class Pay::Stripe::ChargeTest < ActiveSupport::TestCase
         status: "available",
         type: "transfer"
       },
-      created: 1546332337,
+      created: 1_546_332_337,
       currency: "usd",
       invoice: nil,
       payment_intent: "pm_1234",

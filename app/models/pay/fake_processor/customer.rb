@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module FakeProcessor
     class Customer < Pay::Customer
@@ -11,7 +13,7 @@ module Pay
         self
       end
 
-      def update_api_record(**attributes)
+      def update_api_record(**_attributes)
         self
       end
 
@@ -55,11 +57,11 @@ module Pay
         subscriptions.create!(attributes)
       end
 
-      def sync_subscriptions(**options)
+      def sync_subscriptions(**_options)
         []
       end
 
-      def add_payment_method(payment_method_id, default: false)
+      def add_payment_method(_payment_method_id, default: false)
         # Make to generate a processor_id
         api_record
 

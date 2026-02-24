@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "test_helper"
 require "minitest/mock"
 
@@ -16,7 +18,7 @@ class Pay::Braintree::CustomerTest < ActiveSupport::TestCase
     original_value = User.pay_braintree_customer_attributes
 
     attributes = {metadata: {foo: :bar}}
-    User.pay_braintree_customer_attributes = ->(pay_customer) { attributes }
+    User.pay_braintree_customer_attributes = ->(_pay_customer) { attributes }
 
     assert attributes <= pay_customers(:braintree).api_record_attributes
   ensure
@@ -135,12 +137,12 @@ class Pay::Braintree::CustomerTest < ActiveSupport::TestCase
   # https://developers.braintreepayments.com/reference/general/testing/ruby#amount-200000-300099
   test "braintree handles charge failures" do
     @pay_customer.update_payment_method "fake-valid-visa-nonce"
-    assert_raises(Pay::Braintree::Error) { @pay_customer.charge(2000_00) }
+    assert_raises(Pay::Braintree::Error) { @pay_customer.charge(200_000) }
   end
 
   test "braintree fails with paypal processor declined" do
     @pay_customer.update_payment_method "fake-paypal-billing-agreement-nonce"
-    assert_raises(Pay::Braintree::Error) { @pay_customer.charge(5001_01) }
+    assert_raises(Pay::Braintree::Error) { @pay_customer.charge(500_101) }
   end
 
   test "braintree can create a subscription" do
@@ -171,7 +173,7 @@ class Pay::Braintree::CustomerTest < ActiveSupport::TestCase
   # $2000.00 - 2999.99 returns a Processor Declined
   test "braintree fails charges with invalid cards" do
     @pay_customer.update_payment_method "fake-valid-visa-nonce"
-    err = assert_raises(Pay::Braintree::Error) { @pay_customer.charge(2000_00) }
+    err = assert_raises(Pay::Braintree::Error) { @pay_customer.charge(200_000) }
     assert_equal "Do Not Honor", err.message
   end
 
@@ -187,7 +189,8 @@ class Pay::Braintree::CustomerTest < ActiveSupport::TestCase
 
   test "braintree handles invalid parameters" do
     err = assert_raises(Pay::Braintree::AuthorizationError) { @pay_customer.charge(10_00, metadata: {}) }
-    assert_equal "Either the data you submitted is malformed and does not match the API or the API key you used may not be authorized to perform this action.", err.message
+    assert_equal "Either the data you submitted is malformed and does not match the API or the API key you used may not be authorized to perform this action.",
+      err.message
   end
 
   test "braintree card is automatically updated on subscribe" do

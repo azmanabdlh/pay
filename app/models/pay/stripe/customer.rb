@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module Stripe
     class Customer < Pay::Customer
@@ -23,7 +25,7 @@ module Pay
         {email: email, name: customer_name}.merge(attributes)
       end
 
-      def api_record(expand: ["tax", "invoice_credit_balance"])
+      def api_record(expand: %w[tax invoice_credit_balance])
         with_lock do
           if processor_id?
             ::Stripe::Customer.retrieve({id: processor_id, expand: expand}, stripe_options)
@@ -135,7 +137,8 @@ module Pay
       end
 
       def create_setup_intent(options = {})
-        ::Stripe::SetupIntent.create({customer: processor_id || api_record.id, usage: :off_session}.merge(options), stripe_options)
+        ::Stripe::SetupIntent.create({customer: processor_id || api_record.id, usage: :off_session}.merge(options),
+          stripe_options)
       end
 
       def invoice!(options = {})
@@ -180,15 +183,13 @@ module Pay
           args[:cancel_url] = merge_session_id_param(options.delete(:cancel_url) || root_url)
         end
 
-        if options[:return_url]
-          args[:return_url] = merge_session_id_param(options.delete(:return_url))
-        end
+        args[:return_url] = merge_session_id_param(options.delete(:return_url)) if options[:return_url]
 
         # Line items are optional
         if (line_items = options.delete(:line_items))
           quantity = options.delete(:quantity) || 1
 
-          args[:line_items] = Array.wrap(line_items).map { |item|
+          args[:line_items] = Array.wrap(line_items).map do |item|
             if item.is_a? Hash
               item
             else
@@ -197,7 +198,7 @@ module Pay
                 quantity: quantity
               }
             end
-          }
+          end
         end
 
         ::Stripe::Checkout::Session.create(args.merge(options), stripe_options)

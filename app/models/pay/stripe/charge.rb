@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 module Pay
   module Stripe
     class Charge < Pay::Charge
-      EXPAND = ["balance_transaction", "payment_intent", "refunds.data.balance_transaction"]
+      EXPAND = ["balance_transaction", "payment_intent", "refunds.data.balance_transaction"].freeze
 
       delegate :amount_captured, :payment_intent, to: :stripe_object, allow_nil: true
 
@@ -15,7 +17,8 @@ module Pay
 
       def self.sync(charge_id, object: nil, stripe_account: nil, try: 0, retries: 1)
         # Skip loading the latest charge details from the API if we already have it
-        object ||= ::Stripe::Charge.retrieve({id: charge_id, expand: EXPAND}, {stripe_account: stripe_account}.compact)
+        object ||= ::Stripe::Charge.retrieve({id: charge_id, expand: EXPAND},
+          {stripe_account: stripe_account}.compact)
         if object.customer.blank?
           Rails.logger.debug "Stripe Charge #{object.id} does not have a customer"
           return
@@ -48,9 +51,15 @@ module Pay
 
         # Associate charge with subscription if we can
         if object.payment_intent.present?
-          invoice_payments = ::Stripe::InvoicePayment.list({payment: {type: :payment_intent, payment_intent: object.payment_intent}, status: :paid}, {stripe_account: stripe_account}.compact)
+          invoice_payments = ::Stripe::InvoicePayment.list(
+            {payment: {type: :payment_intent, payment_intent: object.payment_intent},
+             status: :paid}, {stripe_account: stripe_account}.compact
+          )
           if invoice_payments.any?
-            invoice = ::Stripe::Invoice.retrieve({id: invoice_payments.first.invoice, expand: ["total_discount_amounts.discount.source.coupon"]}, {stripe_account: stripe_account}.compact)
+            invoice = ::Stripe::Invoice.retrieve(
+              {id: invoice_payments.first.invoice,
+               expand: ["total_discount_amounts.discount.source.coupon"]}, {stripe_account: stripe_account}.compact
+            )
             attrs[:stripe_invoice] = invoice.to_hash
             attrs[:subtotal] = invoice.subtotal
             attrs[:tax] = invoice.total - invoice.total_excluding_tax.to_i
@@ -68,13 +77,11 @@ module Pay
           create!(attrs.merge(customer: pay_customer, processor_id: object.id))
         end
       rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique
-        if try > retries
-          raise
-        else
-          try += 1
-          sleep 0.15**try
-          retry
-        end
+        raise if try > retries
+
+        try += 1
+        sleep 0.15**try
+        retry
       end
 
       def api_record
@@ -122,6 +129,7 @@ module Pay
       # capture(amount_to_capture: 15_00)
       def capture(**options)
         raise Pay::Stripe::Error, "no payment_intent on charge" unless payment_intent.present?
+
         payment_intent_id = payment_intent.is_a?(::Stripe::PaymentIntent) ? payment_intent.id : payment_intent
         ::Stripe::PaymentIntent.capture(payment_intent_id, options, stripe_options)
         self.class.sync(processor_id)
@@ -130,11 +138,11 @@ module Pay
       end
 
       def captured?
-        amount_captured > 0
+        amount_captured.positive?
       end
 
       def stripe_invoice
-        if (value = data.dig("stripe_invoice"))
+        if (value = data["stripe_invoice"])
           ::Stripe::Invoice.construct_from(value)
         end
       end

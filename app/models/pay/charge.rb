@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   class Charge < Pay::ApplicationRecord
     # Associations
@@ -47,7 +49,7 @@ module Pay
     end
 
     def refunded?
-      amount_refunded.to_i > 0
+      amount_refunded.to_i.positive?
     end
 
     def full_refund?

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module LemonSqueezy
     class Subscription < Pay::Subscription
@@ -41,7 +43,7 @@ module Pay
         end
       end
 
-      def api_record(**options)
+      def api_record(**_options)
         @api_record ||= ::LemonSqueezy::Subscription.retrieve(id: processor_id)
       rescue ::LemonSqueezy::Error => e
         raise Pay::LemonSqueezy::Error, e
@@ -55,19 +57,20 @@ module Pay
         api_record.urls.update_payment_method
       end
 
-      def cancel(**options)
+      def cancel(**_options)
         return if canceled?
+
         response = ::LemonSqueezy::Subscription.cancel(id: processor_id)
         update(status: response.status, ends_at: response.ends_at)
       rescue ::LemonSqueezy::Error => e
         raise Pay::LemonSqueezy::Error, e
       end
 
-      def cancel_now!(**options)
+      def cancel_now!(**_options)
         raise Pay::Error, "Lemon Squeezy does not support cancelling immediately through the API."
       end
 
-      def change_quantity(quantity, **options)
+      def change_quantity(quantity, **_options)
         subscription_item = api_record.first_subscription_item
         ::LemonSqueezy::SubscriptionItem.update(id: subscription_item.id, quantity: quantity)
         update(quantity: quantity)
@@ -97,9 +100,7 @@ module Pay
       end
 
       def resume
-        unless resumable?
-          raise Error, "You can only resume paused or cancelled subscriptions"
-        end
+        raise Error, "You can only resume paused or cancelled subscriptions" unless resumable?
 
         if paused? && pause_starts_at? && Time.current < pause_starts_at
           ::LemonSqueezy::Subscription.unpause(id: processor_id)

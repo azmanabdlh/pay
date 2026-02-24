@@ -1,8 +1,12 @@
+# frozen_string_literal: true
+
 module Pay
   # Adds Pay methods to ActiveRecord models
 
   module Attributes
     extend ActiveSupport::Concern
+
+    include Resolvable
 
     module CustomerExtension
       extend ActiveSupport::Concern
@@ -15,11 +19,14 @@ module Pay
         has_many :pay_customers, class_name: "Pay::Customer", as: :owner, inverse_of: :owner
         has_many :pay_charges, through: :pay_customers, class_name: "Pay::Charge", source: :charges
         has_many :pay_subscriptions, through: :pay_customers, class_name: "Pay::Subscription", source: :subscriptions
-        has_one :payment_processor, -> { where(default: true, deleted_at: nil) }, class_name: "Pay::Customer", as: :owner, inverse_of: :owner
+        has_one :payment_processor, lambda {
+          where(default: true, deleted_at: nil)
+        }, class_name: "Pay::Customer", as: :owner, inverse_of: :owner
 
         after_commit :cancel_active_pay_subscriptions!, on: [:destroy]
 
         Pay::Stripe.model_names << name if Pay::Stripe.enabled?
+        Pay::Midtrans.model_names << name if Pay::Midtrans.enabled?
       end
 
       # Changes a user's payment processor
@@ -29,15 +36,19 @@ module Pay
       # - Removes the default flag from all other Pay::Customers
       # - Removes the default flag from all Pay::PaymentMethods
       def set_payment_processor(processor_name, allow_fake: false, stripe_account: nil, **attributes)
-        raise Pay::Error, "Processor `#{processor_name}` is not allowed" if processor_name.to_s == "fake_processor" && !allow_fake
+        if processor_name.to_s == "fake_processor" && !allow_fake
+          raise Pay::Error,
+            "Processor `#{processor_name}` is not allowed"
+        end
 
         # Safety check to make sure this is a valid Pay processor
-        klass = "Pay::#{processor_name.to_s.classify}::Customer".constantize
+        klass = resolve_pay_klass(processor_name, "Customer")
         raise ArgumentError, "not a valid payment processor" if klass.ancestors.exclude?(Pay::Customer)
 
         with_lock do
           pay_customers.update_all(default: false)
-          pay_customer = pay_customers.active.where(processor: processor_name, type: klass.name, stripe_account: stripe_account).first_or_initialize
+          pay_customer = pay_customers.active.where(processor: processor_name, type: klass.name,
+            stripe_account: stripe_account).first_or_initialize
           pay_customer.update!(attributes.merge(default: true))
         end
 
@@ -46,20 +57,23 @@ module Pay
       end
 
       def add_payment_processor(processor_name, allow_fake: false, stripe_account: nil, **attributes)
-        raise Pay::Error, "Processor `#{processor_name}` is not allowed" if processor_name.to_s == "fake_processor" && !allow_fake
+        if processor_name.to_s == "fake_processor" && !allow_fake
+          raise Pay::Error,
+            "Processor `#{processor_name}` is not allowed"
+        end
 
         # Safety check to make sure this is a valid Pay processor
-        klass = "Pay::#{processor_name.to_s.classify}::Customer".constantize
+        klass = resolve_pay_klass(processor_name, "Customer")
         raise ArgumentError, "not a valid payment processor" if klass.ancestors.exclude?(Pay::Customer)
 
-        pay_customer = pay_customers.active.where(processor: processor_name, type: klass.name, stripe_account: stripe_account).first_or_initialize
+        pay_customer = pay_customers.active.where(processor: processor_name, type: klass.name,
+          stripe_account: stripe_account).first_or_initialize
         pay_customer.update!(attributes)
         pay_customer
       end
 
       def payment_processor
         current_processor = super
-
         if current_processor.blank? && self.class.pay_default_payment_processor.present?
           set_payment_processor(self.class.pay_default_payment_processor, allow_fake: true)
         else
@@ -77,13 +91,17 @@ module Pay
 
       included do
         has_many :pay_merchants, class_name: "Pay::Merchant", as: :owner, inverse_of: :owner
-        has_one :merchant_processor, -> { where(default: true) }, class_name: "Pay::Merchant", as: :owner, inverse_of: :owner
+        has_one :merchant_processor, lambda {
+          where(default: true)
+        }, class_name: "Pay::Merchant", as: :owner, inverse_of: :owner
       end
 
       def set_merchant_processor(processor_name, **attributes)
         with_lock do
           pay_merchants.update_all(default: false)
-          pay_merchant = pay_merchants.where(processor: processor_name, type: "Pay::#{processor_name.to_s.classify}::Merchant").first_or_initialize
+          pay_merchant = pay_merchants.where(processor: processor_name,
+            type: resolve_pay_klass(processor_name,
+              "Merchant")).first_or_initialize
           pay_merchant.update!(attributes.merge(default: true))
         end
 
@@ -102,7 +120,7 @@ module Pay
         self.pay_braintree_customer_attributes = options[:braintree_attributes]
       end
 
-      def pay_merchant(options = {})
+      def pay_merchant(_options = {})
         include MerchantExtension
       end
     end

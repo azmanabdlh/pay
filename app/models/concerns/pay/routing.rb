@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Pay
   module Routing
     extend ActiveSupport::Concern
