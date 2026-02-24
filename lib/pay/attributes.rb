@@ -6,10 +6,10 @@ module Pay
   module Attributes
     extend ActiveSupport::Concern
 
+    include Resolvable
+
     module CustomerExtension
       extend ActiveSupport::Concern
-
-      include Resolvable
 
       included do
         cattr_accessor :pay_default_payment_processor
