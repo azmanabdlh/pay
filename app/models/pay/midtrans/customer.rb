@@ -27,7 +27,6 @@ module Pay
 
         options[:transaction_details] ||= {}
         options[:transaction_details][:order_id] ||= "midtrans-#{Pay::NanoId.generate}"
-        options[:transaction_details][:gross_amount] ||= (amount / 100.0)
         options[:custom_field1] ||= Pay::Midtrans.to_client_reference_id(owner)
         response = ::Midtrans.charge(options)
         Pay::Midtrans::Charge.sync(options[:transaction_details][:order_id], object: response.data)
@@ -40,7 +39,6 @@ module Pay
 
         options[:transaction_details] ||= {}
         options[:transaction_details][:order_id] ||= "midtrans-#{Pay::NanoId.generate}"
-        options[:transaction_details][:gross_amount] ||= (options[:amount] || 0) / 100.0
         options[:custom_field1] ||= Pay::Midtrans.to_client_reference_id(owner)
         ::Midtrans.create_snap_token(options)
       rescue ::MidtransError => e
