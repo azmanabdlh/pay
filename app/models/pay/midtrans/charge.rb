@@ -9,10 +9,12 @@ module Pay
       store_accessor :data, :payment_type
 
       def self.sync(order_id, object: nil, try: 0, retries: 1)
-        response ||= ::Midtrans.status(order_id)
-        return unless response.success?
+        object ||= Pay::Midtrans.retrieve(order_id)
+        if object.blank?
+          Rails.logger.error "[Pay] Unable to locate Midtrans Charge with: #{order_id}"
+          return
+        end
 
-        object = response.data
         transaction_id = object[:transaction_id]
         order_id = object[:order_id]
 
@@ -25,7 +27,6 @@ module Pay
         brand = nil
         last4 = nil
         bank = nil
-        email = nil
 
         if object.key?(:masked_card)
           masked = object[:masked_card].to_s
@@ -69,7 +70,7 @@ module Pay
       end
 
       def api_record
-        ::Midtrans.status(processor_id)
+        Pay::Midtrans.retrieve(processor_id)
       rescue ::MidtransError => e
         raise Pay::Midtrans::Error, e.message
       end
