@@ -50,8 +50,11 @@ module Pay
       end
     end
 
-    def self.status(id)
-      ::Midtrans.status(id)
+    def self.retrieve(id)
+      response = ::Midtrans.status(id)
+      return response.data if response.success?
+
+      nil
     end
 
     def self.to_client_reference_id(record)
